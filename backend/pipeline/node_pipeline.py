@@ -1,179 +1,138 @@
-# backend/pipeline/node_pipeline.py
-# Expanded node-based pipeline generation engine
-# Composes ComfyUI graphs, inference fallbacks, mobile vision steps, and durable agent nodes
-# into a single executable DAG for multi-human/agent workflows.
-
-import json
-import uuid
+"""Node Pipeline DAG — unit of autonomous work. Fail-closed on error and human review."""
+from __future__ import annotations
+import asyncio, time, uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable
-from .comfy_graph import ComfyGraphExecutor
+from typing import Any, Dict, Optional
 
-class NodeKind(str, Enum):
+class NodeType(str, Enum):
+    RESEARCH_AGENT = "research_agent"
+    DURABLE_CODE_AGENT = "durable_code_agent"
+    COMFY_RENDER = "comfy_render_node"
+    HUMAN_REVIEW_GATE = "human_review_gate"
+    STORAGE = "storage"
+    CONDITIONAL = "conditional"
     INFERENCE = "inference"
-    RENDER = "render"
-    MOBILE_VISION = "mobile_vision"
     CODE_AGENT = "code_agent"
+    RENDER = "render"
     HUMAN_REVIEW = "human_review"
-    SCHEMA_MIGRATE = "schema_migrate"
-    ARTIFACT_STORE = "artifact_store"
-    CONDITION = "condition"
 
 @dataclass
 class PipelineNode:
     id: str
-    kind: NodeKind
-    label: str
-    config: Dict[str, Any] = field(default_factory=dict)
-    inputs: List[str] = field(default_factory=list)
-    outputs: List[str] = field(default_factory=list)
-    status: str = "idle"  # idle | queued | running | committed | failed
+    type: str
+    config: dict = field(default_factory=dict)
+    status: str = "pending"
+    output: Any = None
+    error: Optional[str] = None
+    inputs: list = field(default_factory=list)
+    kind: Any = None
 
 @dataclass
-class PipelineGraph:
-    id: str
+class Pipeline:
     name: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
     nodes: Dict[str, PipelineNode] = field(default_factory=dict)
-    edges: List[Dict[str, str]] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    edges: list = field(default_factory=list)
 
-class NodePipelineGenerator:
-    """Builds and executes multi-stage node graphs that unify rendering, inference, mobile, and agent work."""
-
-    def __init__(self, comfy_executor: Optional[ComfyGraphExecutor] = None):
-        self.comfy = comfy_executor
-        self._handlers: Dict[NodeKind, Callable] = {
-            NodeKind.RENDER: self._exec_render,
-            NodeKind.INFERENCE: self._exec_inference,
-            NodeKind.MOBILE_VISION: self._exec_mobile,
-            NodeKind.CODE_AGENT: self._exec_code_agent,
-            NodeKind.HUMAN_REVIEW: self._exec_human_review,
-            NodeKind.SCHEMA_MIGRATE: self._exec_schema,
-            NodeKind.ARTIFACT_STORE: self._exec_store,
-            NodeKind.CONDITION: self._exec_condition,
-        }
-
-    def create_graph(self, name: str, description: str = "") -> PipelineGraph:
-        return PipelineGraph(
-            id=str(uuid.uuid4()),
-            name=name,
-            metadata={"description": description, "version": "2.0"}
-        )
-
-    def add_node(self, graph: PipelineGraph, kind: NodeKind, label: str, config: Optional[Dict[str, Any]] = None) -> PipelineNode:
-        node = PipelineNode(
-            id=f"{kind.value}-{uuid.uuid4().hex[:8]}",
-            kind=kind,
-            label=label,
-            config=config or {}
-        )
-        graph.nodes[node.id] = node
+    def add_node(self, node_id: str, node_type: str, **config) -> PipelineNode:
+        node = PipelineNode(id=node_id, type=node_type, config=config)
+        self.nodes[node_id] = node
         return node
 
-    def connect(self, graph: PipelineGraph, from_id: str, to_id: str, output_key: str = "default", input_key: str = "default"):
-        graph.edges.append({"from": from_id, "to": to_id, "output": output_key, "input": input_key})
-        if to_id in graph.nodes and from_id not in graph.nodes[to_id].inputs:
-            graph.nodes[to_id].inputs.append(from_id)
-        if from_id in graph.nodes and to_id not in graph.nodes[from_id].outputs:
-            graph.nodes[from_id].outputs.append(to_id)
+    def connect(self, src, dst):
+        sid = src.id if hasattr(src, "id") else src
+        did = dst.id if hasattr(dst, "id") else dst
+        self.edges.append((sid, did))
+        if did in self.nodes:
+            self.nodes[did].inputs.append(sid)
 
-    def to_comfy_subgraph(self, graph: PipelineGraph, render_node_id: str, prompt: str, seed: int = 42) -> Dict[str, Any]:
-        """Convert a render node into a full ComfyUI prompt graph."""
-        if not self.comfy:
-            raise RuntimeError("ComfyGraphExecutor not configured")
-        return self.comfy.evaluate_generation_primitives(prompt, seed)
+    def topological_sort(self) -> list:
+        in_deg = {n: 0 for n in self.nodes}
+        adj = {n: [] for n in self.nodes}
+        for s, d in self.edges:
+            adj[s].append(d)
+            in_deg[d] += 1
+        q = [n for n, d in in_deg.items() if d == 0]
+        order = []
+        while q:
+            n = q.pop(0)
+            order.append(n)
+            for m in adj[n]:
+                in_deg[m] -= 1
+                if in_deg[m] == 0:
+                    q.append(m)
+        if len(order) != len(self.nodes):
+            raise ValueError(f"Cycle detected in pipeline '{self.name}'")
+        return order
 
-    async def execute(self, graph: PipelineGraph, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Topological execution of the pipeline (simple Kahn-style)."""
+class NodePipelineGenerator:
+    def __init__(self, comfy_executor=None):
+        self.comfy = comfy_executor
+
+    def create_pipeline(self, name: str) -> Pipeline:
+        return Pipeline(name=name)
+
+    def create_graph(self, name: str, description: str = "") -> Pipeline:
+        return Pipeline(name=name)
+
+    def add_node(self, graph, kind, label, config=None):
+        nid = f"{getattr(kind, 'value', kind)}-{uuid.uuid4().hex[:6]}"
+        return graph.add_node(nid, getattr(kind, 'value', str(kind)), **(config or {}))
+
+    def connect(self, graph, a, b):
+        graph.connect(a, b)
+
+    async def execute(self, pipeline, context=None, trajectory_id: str = "") -> dict:
         context = context or {}
-        results: Dict[str, Any] = {}
-        pending = set(graph.nodes.keys())
-        completed = set()
+        if not hasattr(pipeline, "topological_sort"):
+            return {"status": "failed", "error": "invalid pipeline"}
+        order = pipeline.topological_sort()
+        steps = []
+        for nid in order:
+            node = pipeline.nodes[nid]
+            node.status = "running"
+            try:
+                out = await self._dispatch(node, context)
+                # Fail-closed human review
+                if "review" in node.type and out.get("gate") != "approved":
+                    node.status = "awaiting_approval"
+                    steps.append({"node": nid, "type": node.type, "status": "awaiting_approval"})
+                    return {"status": "awaiting_approval", "steps": steps, "graph_id": pipeline.id}
+                node.output = out
+                node.status = "completed"
+                if isinstance(out, dict):
+                    context.update(out)
+            except Exception as e:
+                node.status = "failed"
+                node.error = str(e)
+                steps.append({"node": nid, "type": node.type, "status": "failed", "error": str(e)})
+                return {"status": "failed", "failed_node": nid, "steps": steps, "graph_id": pipeline.id}
+            steps.append({"node": nid, "type": node.type, "status": "completed", "output_preview": str(node.output)[:200]})
+        return {"status": "completed", "steps": steps, "cost": 0.0, "graph_id": getattr(pipeline, "id", "")}
 
-        while pending:
-            ready = [
-                nid for nid in pending
-                if all(inp in completed for inp in graph.nodes[nid].inputs)
-            ]
-            if not ready:
-                # Unresolved dependencies are either gated or invalid cycles. Never report success.
-                break
-            for nid in ready:
-                node = graph.nodes[nid]
-                node.status = "running"
-                handler = self._handlers.get(node.kind, self._exec_passthrough)
-                try:
-                    result = await handler(node, results, context)
-                    results[nid] = result
-                    # Human review gate blocks dependents until approved
-                    if node.kind == NodeKind.HUMAN_REVIEW and result.get("gate") != "approved":
-                        node.status = "awaiting_approval"
-                        # Do not mark completed — dependents stay blocked
-                        pending.remove(nid)
-                        continue
-                    node.status = "committed"
-                except Exception as e:
-                    node.status = "failed"
-                    results[nid] = {"error": str(e)}
-                    # Failure stops dependents: do not add to completed
-                    pending.remove(nid)
-                    continue
-                completed.add(nid)
-                pending.remove(nid)
-        failed = any(n.status == "failed" for n in graph.nodes.values())
-        awaiting = any(n.status == "awaiting_approval" for n in graph.nodes.values())
-        if pending and not (failed or awaiting):
-            for nid in pending:
-                graph.nodes[nid].status = "failed"
-                results[nid] = {"error": "Cycle or unresolved dependency"}
-            failed = True
-        status = "failed" if failed else ("awaiting_approval" if awaiting else "executed")
-        return {"graph_id": graph.id, "status": status, "results": results, "nodes": {k: v.status for k, v in graph.nodes.items()}}
+    async def _dispatch(self, node, ctx):
+        t = node.type
+        await asyncio.sleep(0.01)
+        if "research" in t or t == "inference":
+            return {"research_brief": f"Analysis: {ctx.get('prompt','')[:80]}", "confidence": 0.8}
+        if "code" in t:
+            return {"code_generated": True, "diff_preview": "# stub\n"}
+        if "render" in t:
+            return {"render_id": "scaffold", "status": "queued"}
+        if "review" in t:
+            return {"gate": "pending", "reviewer": "human", "blocked": True}
+        if "storage" in t or "store" in t:
+            return {"stored": True}
+        return {"passthrough": t}
 
-    # --- Node handlers ---
-    async def _exec_render(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        prompt = node.config.get("prompt") or ctx.get("prompt", "cinematic agent swarm")
-        if self.comfy:
-            graph_json = self.comfy.evaluate_generation_primitives(prompt)
-            prompt_id = self.comfy.queue_node_graph(graph_json, node.id)
-            return {"prompt_id": prompt_id, "graph": graph_json}
-        return {"status": "render_stub", "prompt": prompt}
-
-    async def _exec_inference(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"model": node.config.get("model", "local-fallback"), "tokens": 0, "output": "inference stub"}
-
-    async def _exec_mobile(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"device": node.config.get("device_id", "emulator-5554"), "bounds": [0, 0, 1000, 1000], "tap": True}
-
-    async def _exec_code_agent(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"agent": node.config.get("agent", "pydantic-ai"), "diff": "+++ stub patch", "files_changed": 1}
-
-    async def _exec_human_review(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"reviewer": "human", "gate": "pending", "diff_id": node.id, "blocked": True}
-
-    async def _exec_schema(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"version": node.config.get("version", "v1"), "fingerprint": "sha256-stub"}
-
-    async def _exec_store(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"bucket": node.config.get("bucket", "artifacts"), "file_id": str(uuid.uuid4())}
-
-    async def _exec_condition(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"branch": node.config.get("default_branch", "continue")}
-
-    async def _exec_passthrough(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"passthrough": node.kind.value}
-
-def build_example_agent_swarm_pipeline(generator: NodePipelineGenerator) -> PipelineGraph:
-    """Example: research → code agent → render evidence → human review → store."""
-    g = generator.create_graph("Agent Swarm Evidence Pipeline", "Multi-human/agent research-to-evidence flow")
-    research = generator.add_node(g, NodeKind.INFERENCE, "Research Swarm", {"model": "local-orca"})
-    code = generator.add_node(g, NodeKind.CODE_AGENT, "Durable Coder", {"agent": "pydantic-ai"})
-    render = generator.add_node(g, NodeKind.RENDER, "Evidence Visualizer", {"prompt": "terminal evidence console"})
-    review = generator.add_node(g, NodeKind.HUMAN_REVIEW, "Clearance Gate")
-    store = generator.add_node(g, NodeKind.ARTIFACT_STORE, "Appwrite Vault", {"bucket": "evidence"})
-    generator.connect(g, research.id, code.id)
-    generator.connect(g, code.id, render.id)
-    generator.connect(g, render.id, review.id)
-    generator.connect(g, review.id, store.id)
-    return g
+def build_example_agent_swarm_pipeline(gen: NodePipelineGenerator):
+    p = gen.create_pipeline("agent_swarm_v1")
+    r = p.add_node("research", "research_agent")
+    c = p.add_node("code", "durable_code_agent")
+    rev = p.add_node("review", "human_review_gate")
+    v = p.add_node("vault", "storage")
+    p.connect(r, c)
+    p.connect(c, rev)
+    p.connect(rev, v)
+    return p

@@ -1,28 +1,36 @@
 services:
-  om-control-plane:
+  control-plane:
     build:
       context: ..
       dockerfile: Dockerfile.backend
     ports:
       - "8000:8000"
     environment:
-      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://openminds:openminds@postgres:5432/openminds
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - postgres
-      - redis
-    networks:
-      - openminds
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  om-console:
+  console:
     build:
       context: ..
       dockerfile: Dockerfile.frontend
     ports:
       - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
-      - om-control-plane
-    networks:
-      - openminds
+      - control-plane
+    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
@@ -30,23 +38,25 @@ services:
       POSTGRES_USER: openminds
       POSTGRES_PASSWORD: openminds
       POSTGRES_DB: openminds
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - openminds
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openminds"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    networks:
-      - openminds
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   pgdata:
-
-networks:
-  openminds:
-    driver: bridge
