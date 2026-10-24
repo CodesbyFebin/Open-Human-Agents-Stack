@@ -144,10 +144,12 @@ async def run_pipeline(req: PipelineRequest):
     pipeline = state.pipeline_gen.create_pipeline(req.name)
     research = pipeline.add_node("research", "research_agent")
     code = pipeline.add_node("code", "durable_code_agent")
+    render = pipeline.add_node("render", "comfy_render_node")
     review = pipeline.add_node("review", "human_review_gate", timeout_seconds=0)
     vault = pipeline.add_node("vault", "storage")
     pipeline.connect(research, code)
-    pipeline.connect(code, review)
+    pipeline.connect(code, render)
+    pipeline.connect(render, review)
     pipeline.connect(review, vault)
 
     context: dict[str, Any] = {"prompt": req.prompt, "seed": req.seed}
@@ -169,7 +171,7 @@ async def run_pipeline(req: PipelineRequest):
 
     # Publish event
     await state.redis.publish("openminds:events", json.dumps({
-        "type": "pipeline_completed", "run_id": run_id, "status": result["status"]
+        "type": "pipeline_run_status", "run_id": run_id, "status": result["status"]
     }))
 
     return {"run_id": run_id, "status": result["status"], "steps": result["steps"]}
