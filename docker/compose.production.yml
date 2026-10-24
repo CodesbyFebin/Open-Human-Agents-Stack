@@ -1,0 +1,91 @@
+# Canonical bounded deployment candidate.
+# Compose syntax validated in CI; NOT a production approval.
+name: openminds
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: openminds
+      POSTGRES_DB: openminds
+      POSTGRES_PASSWORD: ${OM_DB_PASSWORD:?Set a strong OM_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openminds -d openminds"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    networks: [private]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    networks: [private]
+
+  control-plane:
+    build:
+      context: ..
+      dockerfile: Dockerfile.backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://openminds:${OM_DB_PASSWORD:?Set a strong OM_DB_PASSWORD}@postgres:5432/openminds
+      REDIS_URL: redis://redis:6379/0
+      MTLS_CA_CERT_PATH: /etc/openminds/certs/ca.crt
+      MTLS_SERVER_CERT_PATH: /etc/openminds/certs/server.crt
+      MTLS_SERVER_KEY_PATH: /etc/openminds/certs/server.key
+    volumes:
+      - ${OM_CERT_DIR:?Set OM_CERT_DIR to an absolute directory with PKI material}:/etc/openminds/certs:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    pids_limit: 256
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r=httpx.get('http://127.0.0.1:8000/health', timeout=3); assert r.status_code == 200 and r.json()['status'] == 'operational'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks: [private]
+
+  console:
+    build:
+      context: ..
+      dockerfile: Dockerfile.frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${OM_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_WS_URL: ${OM_PUBLIC_WS_URL:-ws://localhost:8000}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      control-plane: { condition: service_healthy }
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    restart: unless-stopped
+    networks: [private]
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  private:
+    driver: bridge

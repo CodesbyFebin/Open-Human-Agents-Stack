@@ -1,0 +1,48 @@
+name: Bounded Compose qualification
+
+on:
+  pull_request:
+    paths:
+      - "docker/**"
+      - "Dockerfile.*"
+      - ".github/workflows/compose-hardened.yml"
+  workflow_dispatch:
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check combined Compose config
+        env:
+          OM_DB_PASSWORD: ci_example_only
+          OM_CERT_DIR: /tmp/openminds-cert-fixture
+        run: |
+          docker compose -f docker/compose.production.yml config --quiet
+          docker compose -f docker/compose.production.yml config --format json > /tmp/om-compose.json
+          python3 -c 'import json; c=json.load(open("/tmp/om-compose.json")); s=c["services"]; assert "/var/run/docker.sock" not in json.dumps(s); assert all("privileged" not in v for v in s.values()); assert all(v.get("cap_drop")==["ALL"] for k,v in s.items() if k in ("control-plane","console")); assert all(not v.get("ports") for k,v in s.items() if k in ("postgres","redis"))'
+      - name: Build and boot bounded stack
+        env:
+          OM_DB_PASSWORD: ci_example_only
+          OM_CERT_DIR: /tmp/openminds-cert-fixture
+        run: |
+          mkdir -p /tmp/openminds-cert-fixture
+          docker compose -f docker/compose.production.yml up -d --build --wait
+          curl --fail --silent http://127.0.0.1:8000/health > /tmp/openminds-health.json
+          python3 -c 'import json; s=json.load(open("/tmp/openminds-health.json")); assert s["status"]=="operational"; assert s["checks"]["redis"] and s["checks"]["postgres"]'
+          curl --fail --silent http://127.0.0.1:3000/ > /dev/null
+      - name: Capture service status
+        if: always()
+        env:
+          OM_DB_PASSWORD: ci_example_only
+          OM_CERT_DIR: /tmp/openminds-cert-fixture
+        run: |
+          docker compose -f docker/compose.production.yml ps
+          docker compose -f docker/compose.production.yml logs --no-color --tail=60
+      - name: Tear down disposable services
+        if: always()
+        env:
+          OM_DB_PASSWORD: ci_example_only
+          OM_CERT_DIR: /tmp/openminds-cert-fixture
+        run: docker compose -f docker/compose.production.yml down --volumes --remove-orphans
