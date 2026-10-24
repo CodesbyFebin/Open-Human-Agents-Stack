@@ -1,0 +1,33 @@
+name: Redis mesh interoperability
+
+on:
+  pull_request:
+    paths:
+      - "backend/api/websocket.py"
+      - "backend/main.py"
+      - "tests/test_event_mesh.py"
+      - ".github/workflows/redis-mesh.yml"
+  workflow_dispatch:
+
+jobs:
+  redis-roundtrip:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s
+          --health-timeout 2s
+          --health-retries 12
+    env:
+      REDIS_URL: redis://localhost:6379/0
+      EVENT_MESH_INTEGRATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install fastapi redis==5.2.1 structlog pytest pytest-asyncio
+      - run: pytest -q tests/test_event_mesh.py
