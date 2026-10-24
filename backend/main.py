@@ -21,6 +21,7 @@ from backend.pipeline.node_pipeline import NodePipelineGenerator
 from backend.jobs.job_runner import JobRunner
 from backend.security.mcp_auth import MCPAuthenticator
 from backend.api.websocket import ConnectionManager
+from backend.security.pki_status import crypto_status
 
 log = structlog.get_logger()
 
@@ -130,6 +131,7 @@ async def health():
         "service": "openminds-control-plane",
         "version": "1.0.0",
         "checks": checks,
+        "cryptoStatus": crypto_status(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

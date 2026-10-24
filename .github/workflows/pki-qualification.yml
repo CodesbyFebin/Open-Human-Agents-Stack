@@ -1,0 +1,33 @@
+name: PKI qualification
+
+on:
+  pull_request:
+    paths:
+      - "scripts/bootstrap_pki.sh"
+      - "backend/security/pki_status.py"
+      - "tests/test_pki_status.py"
+      - ".github/workflows/pki-qualification.yml"
+  workflow_dispatch:
+
+jobs:
+  local-crypto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate and verify disposable test certificates
+        run: |
+          export OM_CERT_DIR="${RUNNER_TEMP}/openminds-pki-test"
+          export OM_RUNNER_ID="runner-ci"
+          bash scripts/bootstrap_pki.sh
+          openssl verify -CAfile "${OM_CERT_DIR}/ca.crt" -purpose sslserver "${OM_CERT_DIR}/server.crt"
+          openssl verify -CAfile "${OM_CERT_DIR}/ca.crt" -purpose sslclient "${OM_CERT_DIR}/runners/runner-ci/runner.crt"
+          if bash scripts/bootstrap_pki.sh; then
+            echo "Expected overwrite rejection" >&2
+            exit 1
+          fi
+          test ! -f "${OM_CERT_DIR}/runners/runner-ci/ca.key"
+      - name: Test health diagnostic
+        run: |
+          python -m pip install pytest
+          pytest -q tests/test_pki_status.py
