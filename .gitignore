@@ -9,3 +9,6 @@ next-env.d.ts
 backups/
 *.sql.gz
 dist/
+
+# Local evaluation clones: preserve upstream repositories and licenses
+.upstream-sources/

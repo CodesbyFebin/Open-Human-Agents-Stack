@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "description": "External projects evaluated independently. None are bundled or enabled by default.",
+  "projects": [
+    {
+      "id": "octop",
+      "repository": "TencentCloud/Octop",
+      "url": "https://github.com/TencentCloud/Octop.git",
+      "role": "self-hosted assistant and expert gateway",
+      "language": "Python",
+      "license": "MIT",
+      "integration": "standalone-service",
+      "enabled": false,
+      "distribution": "source-reference",
+      "requirements": [
+        "separate service identity",
+        "authenticated API bridge",
+        "isolated credentials",
+        "contract tests"
+      ]
+    },
+    {
+      "id": "openhuman",
+      "repository": "tinyhumansai/openhuman",
+      "url": "https://github.com/tinyhumansai/openhuman.git",
+      "role": "Rust agent harness and desktop runtime",
+      "language": "Rust",
+      "license": "GPL-3.0",
+      "integration": "separate-process-evaluation",
+      "enabled": false,
+      "distribution": "source-reference",
+      "requirements": [
+        "GPL source/license obligations review",
+        "process boundary",
+        "runtime API contract",
+        "independent security review"
+      ]
+    },
+    {
+      "id": "andee",
+      "repository": "kuafuai/andee",
+      "url": "https://github.com/kuafuai/andee.git",
+      "role": "Android and macOS device-resident agent",
+      "language": "Kotlin",
+      "license": "custom Apache-2.0 with additional conditions",
+      "integration": "local-only-evaluation",
+      "enabled": false,
+      "distribution": "never-bundle-without-written-permission",
+      "requirements": [
+        "KUAFUAI written authorization for multi-tenant device service",
+        "written authorization before bundling into product",
+        "preserve end-user name/icon/notices",
+        "human-controlled device permission and confirmation"
+      ]
+    }
+  ]
+}
