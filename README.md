@@ -1,23 +1,19 @@
 > **SCAFFOLD / v0.3** — Architecture is designed; wiring is in progress. This is not a production release. See [Status](#status).
 
-## Live proof (verified 2026-10-24)
+## Verified Compose boot (GitHub Actions, 24 October 2026)
 
-```
-GET /health
-{"status":"degraded","service":"openminds-control-plane","version":"2.3.0","redis":false}
+[Compose qualification run #2](https://github.com/CodesbyFebin/Open-Human-Agents-Stack/actions/runs/40095753959) built and started the real Compose services on a disposable Ubuntu Linux runner, checked the web UI, and captured container diagnostics.
 
-POST /pipeline/run  (Bearer)
-{"status":"awaiting_approval","steps_executed":3}
-  research  completed
-  code      completed
-  review    awaiting_approval   ← fail-closed gate
-
-POST /board/issues (Bearer) → {"status":"created"}
-POST /agent/code   (no auth) → 401
+```json
+{
+  "status": "operational",
+  "service": "openminds-control-plane",
+  "version": "1.0.0",
+  "checks": { "redis": true, "postgres": true }
+}
 ```
 
-Tests: `6 passed` (`test_pipeline`, `test_api`, `test_health`).
-
+**Scope:** one successful boot/health probe, not production qualification. The runner stopped the services after collecting evidence. Multi-user isolation, adversarial worker execution, durable job recovery, backup/restore and independent security review remain release blockers.
 
 
 # OpenMinds — Open Human Agents Stack
