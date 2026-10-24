@@ -6,6 +6,28 @@ A self-hostable control plane where humans and AI agents operate as first-class 
 
 > Systems that prove what happened.
 
+## Full-Stack Launch
+
+```bash
+# Backend control plane
+pip install -r requirements.txt
+uvicorn backend.main:app --reload --port 8000
+
+# Frontend console
+npm install
+npm run dev
+# Open http://localhost:3000
+
+# Or full stack via Docker
+docker compose -f docker/docker-compose.yml up --build
+```
+
+Endpoints:
+- `GET /health` — control plane status
+- `POST /pipeline/run` — execute node-based agent swarm pipeline
+- `POST /agent/code` — schedule durable coding agent
+- `GET /telemetry/summary` — live metrics
+
 ## Why OpenMinds
 
 Most platforms stop at chat or one-click remix. OpenMinds is built for autonomous production work:
@@ -24,7 +46,7 @@ Most platforms stop at chat or one-click remix. OpenMinds is built for autonomou
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────────┐
 │ Unified Console (Next.js)                                │
 │ Board · Node Flows · Diagnostics · Assets · Terminal     │
 └────────────────────────┬─────────────────────────────────┘
@@ -32,7 +54,7 @@ Most platforms stop at chat or one-click remix. OpenMinds is built for autonomou
 ┌────────────────────────▼───────────────────────────────┐
 │ Control Plane                                            │
 │ Auth · Squads · Orchestration · Telemetry · PKI          │
-└───────┬──────────────┬──────────────┬─────────────────────┘
+└───────┬──────────────┬─────────────┬─────────────────────┘
         ▼              ▼              ▼
    Local Daemon   Runner Fleet   Durable Agents
    (BYO CLIs)     (Pods)         (Pydantic AI)
@@ -41,25 +63,6 @@ Most platforms stop at chat or one-click remix. OpenMinds is built for autonomou
 ## Topics
 
 `ai-agents` `multi-agent` `agent-swarm` `autonomous-agents` `self-hosted` `open-source` `pydantic-ai` `comfyui` `mobile-use` `durable-execution` `workflow-orchestration` `human-in-the-loop` `skills-marketplace` `mtls` `zero-trust` `rag` `voice-agents` `edge-computing` `evidence-systems` `codesbyfebin`
-
-## Quick Start
-
-```bash
-git clone https://github.com/CodesbyFebin/Open-Human-Agents-Stack.git
-cd Open-Human-Agents-Stack
-
-# Apply schemas
-psql -f database/schema_extensions.sql
-psql -f database/multica_schema.sql
-psql -f database/system_extensions.sql
-
-# Bootstrap mTLS
-chmod +x scripts/bootstrap_pki.sh
-./scripts/bootstrap_pki.sh
-
-# Launch
-docker compose -f docker/docker-compose.prod.yml -f docker/docker-compose.extensions.yml up --build -d
-```
 
 ## Core Engines
 
@@ -78,6 +81,6 @@ docker compose -f docker/docker-compose.prod.yml -f docker/docker-compose.extens
 
 ## Status
 
-Production-oriented scaffolds for a fully functional autonomous platform. Control plane, schemas, node pipelines, security mesh, and operator consoles are resident and ready for live wiring.
+Full-stack application is live: FastAPI control plane, Next.js operator console, Docker Compose (Postgres + Redis + services), node pipeline DAG, security mesh, and all enterprise engines. Ready for live wiring and production hardening.
 
 Built by [CodesbyFebin](https://github.com/CodesbyFebin) · systems that prove what happened.
