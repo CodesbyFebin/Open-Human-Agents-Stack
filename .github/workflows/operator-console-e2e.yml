@@ -1,0 +1,70 @@
+name: Operator console browser
+
+on:
+  pull_request:
+    paths:
+      - "ui/pages/**"
+      - "tests/test_e2e_browser.py"
+      - ".github/workflows/operator-console-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: openminds
+          POSTGRES_PASSWORD: openminds
+          POSTGRES_DB: openminds
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U openminds"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://openminds:openminds@localhost:5432/openminds
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -r requirements.txt
+      - run: npm install --no-audit --no-fund
+      - run: python -m playwright install --with-deps chromium
+      - name: Apply database schema
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=openminds psql -h 127.0.0.1 -U openminds -d openminds -v ON_ERROR_STOP=1 -f database/init/01_schema.sql
+      - name: Start API and Next.js
+        run: |
+          uvicorn backend.main:app --host 127.0.0.1 --port 8000 > /tmp/openminds-api.log 2>&1 &
+          npm run dev -- -H 127.0.0.1 -p 3000 > /tmp/openminds-ui.log 2>&1 &
+          for i in $(seq 1 50); do
+            if curl -sf http://127.0.0.1:8000/health | grep -q operational && curl -sf http://127.0.0.1:3000/ > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Browser interaction and persistence tests
+        run: pytest -v tests/test_e2e_browser.py
+      - name: Logs on failure
+        if: failure()
+        run: |
+          tail -n 100 /tmp/openminds-api.log || true
+          tail -n 100 /tmp/openminds-ui.log || true
