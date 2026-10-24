@@ -1,3 +1,5 @@
+> **SCAFFOLD / v0.3** — Architecture is designed; wiring is in progress. This is not a production release. See [Status](#status).
+
 # OpenMinds — Open Human Agents Stack
 <img width="2172" height="724" alt="Open Human Agents Command Center" src="https://github.com/user-attachments/assets/6e5908f3-4dc2-4d02-868d-da642f7b875b" />
 

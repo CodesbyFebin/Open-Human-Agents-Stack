@@ -1,0 +1,5 @@
+# OpenMinds (Open Human Agents Stack)
+Scaffold for a self-hosted multi-human and multi-agent control plane.
+Status: v0.3 scaffold — not production.
+Entry: backend/main.py (FastAPI), ui/ (Next.js).
+Auth: Bearer API key. Human review gates are fail-closed.
