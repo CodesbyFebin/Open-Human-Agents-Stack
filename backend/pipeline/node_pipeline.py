@@ -17,6 +17,10 @@ from backend.db import async_session
 log = structlog.get_logger()
 
 
+class PipelineBlocked(RuntimeError):
+    """Unavailable provider or authorization; must not continue."""
+
+
 class NodeType(str, Enum):
     RESEARCH_AGENT = "research_agent"
     DURABLE_CODE_AGENT = "durable_code_agent"
@@ -90,6 +94,7 @@ class NodePipelineGenerator:
 
     async def execute(self, pipeline: Pipeline, context: dict[str, Any], run_id: str) -> dict[str, Any]:
         order = pipeline.topological_sort()
+        context = {**context, "run_id": run_id}
         steps: list[dict] = []
 
         for i, node_id in enumerate(order):
@@ -116,6 +121,12 @@ class NodePipelineGenerator:
 
                 if isinstance(node.output, dict):
                     context.update(node.output)
+
+            except PipelineBlocked as e:
+                node.status = "blocked"
+                node.error = str(e)
+                steps.append({"node": node_id, "type": node.type.value, "status": "blocked", "reason": str(e)})
+                return {"status": "blocked", "blocked_node": node_id, "steps": steps}
 
             except Exception as e:
                 node.status = "failed"
@@ -159,33 +170,39 @@ class NodePipelineGenerator:
     # ─── Node Executors ─────────────────────────────────────────────────────
 
     async def _exec_research(self, node: PipelineNode, context: dict) -> dict:
-        prompt = context.get("prompt", "")
-        await asyncio.sleep(0.05)
-        return {"research_brief": f"Analysis for: {prompt[:100]}", "confidence": 0.85}
+        raise PipelineBlocked("Research provider integration is not configured")
 
     async def _exec_code(self, node: PipelineNode, context: dict) -> dict:
-        prompt = context.get("prompt", "")
-        await asyncio.sleep(0.05)
-        return {"code_generated": True, "diff_preview": f"# Generated for: {prompt[:50]}\n"}
+        raise PipelineBlocked("Authenticated isolated coding executor not connected")
 
     async def _exec_render(self, node: PipelineNode, context: dict) -> dict:
         import os
-        comfy_url = os.getenv("COMFYUI_URL", "http://localhost:8188")
-        await asyncio.sleep(0.05)
-        return {"render_id": "placeholder", "comfy_url": comfy_url, "status": "queued"}
+        from backend.pipeline.comfy_graph import ComfyGraphExecutor
+
+        address = os.getenv("COMFYUI_HOST", "").strip()
+        if not address:
+            raise PipelineBlocked("ComfyUI endpoint not configured")
+        if "/" in address or "://" in address:
+            raise PipelineBlocked("COMFYUI_HOST must be a trusted host:port, not a URL")
+        prompt = context.get("prompt", "")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise PipelineBlocked("ComfyUI prompt missing")
+        executor = ComfyGraphExecutor(address)
+        graph = executor.evaluate_generation_primitives(prompt, context.get("seed", 42))
+        prompt_id = await asyncio.to_thread(executor.queue_node_graph, graph, context["run_id"])
+        if not prompt_id:
+            raise PipelineBlocked("ComfyUI did not return a prompt id")
+        return {"render_prompt_id": prompt_id, "render_status": "queued_not_completed"}
 
     async def _exec_review_gate(self, node: PipelineNode, context: dict) -> dict:
-        timeout = node.config.get("timeout_seconds", 0)
-        if timeout == 0:
-            # Auto-approve (scaffold mode only — in production, this waits for webhook)
-            return {"review_decision": "approved", "reviewer": "auto"}
-        # In production: publish to Redis, wait for review_decision event
-        return {"review_decision": "approved", "reviewer": "timeout_fallback"}
+        raise PipelineBlocked("Human approval requires authenticated durable reviewer decision")
 
     async def _exec_storage(self, node: PipelineNode, context: dict) -> dict:
-        return {"stored": True, "artifact_count": len(context)}
+        raise PipelineBlocked("Verified artifact vault adapter not configured")
 
     async def _exec_conditional(self, node: PipelineNode, context: dict) -> dict:
         threshold = node.config.get("threshold", 0.7)
-        score = context.get("confidence", 0.0)
+        score = context.get("confidence")
+        if not isinstance(score, (float, int)):
+            raise PipelineBlocked("Condition score unavailable")
         return {"branch": "pass" if score >= threshold else "fail", "score": score}
