@@ -105,13 +105,25 @@ class NodePipelineGenerator:
                 try:
                     result = await handler(node, results, context)
                     results[nid] = result
+                    # Human review gate blocks dependents until approved
+                    if node.kind == NodeKind.HUMAN_REVIEW and result.get("gate") != "approved":
+                        node.status = "awaiting_approval"
+                        # Do not mark completed — dependents stay blocked
+                        pending.remove(nid)
+                        continue
                     node.status = "committed"
                 except Exception as e:
                     node.status = "failed"
                     results[nid] = {"error": str(e)}
+                    # Failure stops dependents: do not add to completed
+                    pending.remove(nid)
+                    continue
                 completed.add(nid)
                 pending.remove(nid)
-        return {"graph_id": graph.id, "results": results, "nodes": {k: v.status for k, v in graph.nodes.items()}}
+        failed = any(n.status == "failed" for n in graph.nodes.values())
+        awaiting = any(n.status == "awaiting_approval" for n in graph.nodes.values())
+        status = "failed" if failed else ("awaiting_approval" if awaiting else "executed")
+        return {"graph_id": graph.id, "status": status, "results": results, "nodes": {k: v.status for k, v in graph.nodes.items()}}
 
     # --- Node handlers ---
     async def _exec_render(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
@@ -132,7 +144,7 @@ class NodePipelineGenerator:
         return {"agent": node.config.get("agent", "pydantic-ai"), "diff": "+++ stub patch", "files_changed": 1}
 
     async def _exec_human_review(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
-        return {"reviewer": "human", "gate": "pending", "diff_id": node.id}
+        return {"reviewer": "human", "gate": "pending", "diff_id": node.id, "blocked": True}
 
     async def _exec_schema(self, node: PipelineNode, results: Dict, ctx: Dict) -> Dict:
         return {"version": node.config.get("version", "v1"), "fingerprint": "sha256-stub"}
