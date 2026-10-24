@@ -60,11 +60,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: cd ui && npm ci
+      - run: npm install --no-audit --no-fund
       - name: Type check
-        run: cd ui && npx tsc --noEmit
+        run: npx tsc --noEmit
       - name: Build
-        run: cd ui && npm run build
+        run: npm run build
 
   docker:
     runs-on: ubuntu-latest
@@ -97,7 +97,7 @@ jobs:
         with:
           node-version: "20"
       - run: pip install -r requirements.txt
-      - run: cd ui && npm ci
+      - run: npm install --no-audit --no-fund
       - name: Install Playwright
         run: playwright install --with-deps chromium
       - name: Run E2E
@@ -107,8 +107,7 @@ jobs:
           sleep 5
           psql "postgresql://openminds:openminds@localhost:5432/openminds" -f database/init/01_schema.sql
           uvicorn backend.main:app --port 8000 &
-          cd ui && npm run dev -- -p 3000 &
+          npm run dev -- -p 3000 &
           sleep 10
-          cd ..
           pytest tests/test_e2e_browser.py -v --tb=short
           docker compose -f docker/docker-compose.yml down
