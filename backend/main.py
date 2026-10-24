@@ -338,7 +338,8 @@ async def telemetry_summary():
         "trajectories_recorded": trajectories or 0,
         "issues_open": open_issues or 0,
         "jobs_active": jobs_pending or 0,
-        "circuit_breaker": "closed",
+        "circuit_breaker": "unknown",
+        "event_mesh": state.ws_manager.status() if state.ws_manager else {"subscriber_connected": False},
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
