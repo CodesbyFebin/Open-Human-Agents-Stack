@@ -1,25 +1,23 @@
 """Regression tests for privilege boundaries; no external services required."""
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.auth import get_current_user
 from backend.worker import run_isolated, process_job
 
-USER = {"id": "u1", "org_id": "org-a", "role": "admin"}
 
-def test_caller_cannot_self_approve_mcp_tool():
-    app.dependency_overrides[get_current_user] = lambda: USER
+def test_caller_cannot_self_approve_mcp_tool(monkeypatch):
+    monkeypatch.setenv("OPENMINDS_OPERATOR_TOKEN", "test-operator-credential")
     try:
         with TestClient(app) as client:
-            result = client.post("/mcp/call", json={"tool": "shell", "approved": True})
+            result = client.post("/mcp/call", json={"tool": "shell", "approved": True}, headers={"Authorization": "Bearer test-operator-credential"})
         assert result.status_code == 403
     finally:
-        app.dependency_overrides.clear()
+        pass
 
-def test_mcp_check_does_not_claim_tool_executed():
+def test_mcp_check_does_not_claim_tool_executed(monkeypatch):
     app.dependency_overrides[get_current_user] = lambda: USER
     try:
         with TestClient(app) as client:
-            result = client.post("/mcp/call", json={"tool": "read_file"})
+            result = client.post("/mcp/call", json={"tool": "read_file"}, headers={"Authorization": "Bearer test-operator-credential"})
         assert result.status_code == 200
         assert result.json()["status"] == "capability_checked_not_executed"
     finally:
