@@ -10,7 +10,7 @@ const COLUMNS = [
   { status: "blocked", label: "Blocked", hint: "Requires attention" },
   { status: "closed", label: "Completed", hint: "Reviewed and closed" },
 ] as const;
-type View = "board" | "activity" | "fleet" | "evidence" | "flows" | "diagnostics" | "assets" | "terminal" | "runs" | "knowledge" | "voice" | "mobile" | "workflows";
+type View = "board" | "activity" | "fleet" | "evidence" | "flows" | "diagnostics" | "assets" | "terminal" | "runs" | "knowledge" | "voice" | "mobile" | "workflows" | "cost" | "agents" | "audit" | "settings" | "diffs" | "alerts" | "squads" | "presence" | "reports";
 type Issue = { id: string; title: string; body?: string; status: string; assignee_type: string; priority: number; created_at: string; updated_at?: string };
 type Metrics = { active_runners: number; trajectories_recorded: number; issues_open: number; jobs_active: number; timestamp: string };
 type Runner = { id: string; runner_id: string; status: string; capacity: number; last_heartbeat?: string };
@@ -137,6 +137,15 @@ export default function Home() {
     { id: "voice", label: "Voice", glyph: "◉" },
     { id: "mobile", label: "Mobile", glyph: "▯" },
     { id: "workflows", label: "Workflows", glyph: "⇄" },
+    { id: "cost", label: "Costs", glyph: "$" },
+    { id: "agents", label: "Agents", glyph: "⬡" },
+    { id: "audit", label: "Audit", glyph: "▤" },
+    { id: "settings", label: "Settings", glyph: "⚙" },
+    { id: "diffs", label: "Diffs", glyph: "±" },
+    { id: "alerts", label: "Alerts", glyph: "♧" },
+    { id: "squads", label: "Squads", glyph: "◈" },
+    { id: "presence", label: "Presence", glyph: "◎" },
+    { id: "reports", label: "Reports", glyph: "↓" },
   ];
   return (
     <div className="om-root">
@@ -188,6 +197,15 @@ export default function Home() {
           {view === "voice" && <section className="om-panel"><div className="om-panel-header"><h2>Voice sessions</h2><span className="om-tag blocked">Disconnected</span></div><p className="om-muted">Live audio and interruption controls are unavailable until real model, permission and session adapters are connected.</p><button className="om-disabled" type="button" disabled>Start voice unavailable</button></section>}
           {view === "mobile" && <section className="om-panel"><div className="om-panel-header"><h2>Device sessions</h2><span className="om-tag blocked">No approved session</span></div><p className="om-muted">No authorized device belongs to this browser session. Framebuffer and touch controls stay disabled without a verified operator identity and explicit device approval.</p><button className="om-disabled" type="button" disabled>Connect device unavailable</button></section>}
           {view === "workflows" && <section className="om-panel"><div className="om-panel-header"><h2>Human-gated workflows</h2><span className="om-tag blocked">Execution gated</span></div><p className="om-muted">The workflow editor and scheduler require persisted definitions, exact-action review grants and tested workers. No run or approval is simulated here.</p><button className="om-disabled" type="button" disabled>Trigger workflow unavailable</button></section>}
+          {view === "cost" && <section className="om-panel"><div className="om-panel-header"><h2>Cost & Budget</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">Provider metering, currency, per-tenant spend and budget approvals require a verified usage endpoint. No cost figures are fabricated.</p></section>}
+          {view === "agents" && <section className="om-panel"><div className="om-panel-header"><h2>Agent details</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">Only registered runners are available from the API. Agent persona, model, confidence and task assignment are not exposed.</p></section>}
+          {view === "audit" && <section className="om-panel"><div className="om-panel-header"><h2>Audit log</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">Ephemeral WebSocket notifications are not an immutable audit record. A paginated, tenant-scoped append-only audit API is required.</p></section>}
+          {view === "settings" && <section className="om-panel"><div className="om-panel-header"><h2>Model router</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">Provider selection and secret configuration must be managed by an authorized server-side API, not local browser storage.</p></section>}
+          {view === "diffs" && <section className="om-panel"><div className="om-panel-header"><h2>Code diffs</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">A hash-bound repository change and authorized artifact endpoint are required before code review can be shown.</p></section>}
+          {view === "alerts" && <section className="om-panel"><div className="om-panel-header"><h2>Alert rules</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">Persisted thresholds, schedules, destinations and deduplication are not yet connected.</p></section>}
+          {view === "squads" && <section className="om-panel"><div className="om-panel-header"><h2>Squad management</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">Tenant membership and human-agent squad APIs have not been qualified.</p></section>}
+          {view === "presence" && <section className="om-panel"><div className="om-panel-header"><h2>Workspace presence</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">Authenticated session heartbeats and expiration are required; no online users are inferred.</p></section>}
+          {view === "reports" && <section className="om-panel"><div className="om-panel-header"><h2>Evidence reports</h2><span className="om-tag blocked">API pending</span></div><p className="om-muted">A verifiable report requires durable evidence and authorized export APIs; none are connected to this module.</p></section>}
           <footer className="om-footer">Data source: {API} <span>·</span> Last telemetry: {fmt(metrics?.timestamp)} <span>·</span> No demo records are injected</footer>
         </main>
       </div>
