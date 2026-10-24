@@ -7,19 +7,22 @@ interface FramebufferStreamProps {
   deviceId: string;
   platform: 'ANDROID' | 'IOS';
   refreshRateMs?: number;
+  /** Same-origin authenticated proxy; never pass a device token to browser code. */
+  frameProxyUrl?: string;
 }
 
 export const MobileFrameBufferStream: React.FC<FramebufferStreamProps> = ({
   deviceId,
   platform,
   refreshRateMs = 100,
+  frameProxyUrl,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [streamActive, setStreamActive] = useState<boolean>(true);
+  const [streamActive, setStreamActive] = useState<boolean>(Boolean(frameProxyUrl));
   const [pipelineMetrics, setPipelineMetrics] = useState({ fps: 0, droppedFrames: 0, bandwidthKbps: 0 });
 
   useEffect(() => {
-    if (!streamActive) return;
+    if (!streamActive || !frameProxyUrl) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -34,7 +37,7 @@ export const MobileFrameBufferStream: React.FC<FramebufferStreamProps> = ({
     const fetchLatestFrame = async () => {
       try {
         const startTime = performance.now();
-        const frameUrl = `/api/mobile/frame-buffer?device_id=${encodeURIComponent(deviceId)}&platform=${platform}&ts=${startTime}`;
+        const frameUrl = `${frameProxyUrl}?device_id=${encodeURIComponent(deviceId)}&platform=${platform}&ts=${startTime}`;
         const response = await fetch(frameUrl);
         if (!response.ok) throw new Error('Network ingestion dropped.');
         const blob = await response.blob();
@@ -74,19 +77,20 @@ export const MobileFrameBufferStream: React.FC<FramebufferStreamProps> = ({
       clearInterval(loopRunner);
       clearInterval(trackingInterval);
     };
-  }, [deviceId, platform, refreshRateMs, streamActive]);
+  }, [deviceId, platform, refreshRateMs, streamActive, frameProxyUrl]);
 
   return (
     <div className="w-full bg-zinc-950 p-4 border border-zinc-900 rounded-xl font-mono text-[11px] text-zinc-400">
       <div className="flex justify-between items-center mb-3 pb-2 border-b border-zinc-900">
         <span className="text-zinc-200 font-bold uppercase tracking-wider text-xs">// STREAMING FRAMEBUFFER: {deviceId}</span>
         <button
+          disabled={!frameProxyUrl}
           onClick={() => setStreamActive(!streamActive)}
           className={`px-3 py-1 rounded text-[10px] font-bold border transition-all ${
             streamActive ? 'bg-indigo-950/40 border-indigo-500 text-indigo-400' : 'bg-zinc-900 border-zinc-800 text-zinc-600'
           }`}
         >
-          {streamActive ? 'HALT INTERFACE POLLING' : 'RESUME POLLING'}
+          {!frameProxyUrl ? 'AUTHORIZED PROXY REQUIRED' : streamActive ? 'HALT INTERFACE POLLING' : 'RESUME POLLING'}
         </button>
       </div>
       <div className="flex flex-col lg:flex-row gap-4 items-center">
@@ -101,7 +105,7 @@ export const MobileFrameBufferStream: React.FC<FramebufferStreamProps> = ({
           <div className="flex justify-between"><span className="text-zinc-600">DATA BANDWIDTH THROUGHPUT:</span><span className="text-indigo-400 font-bold">{pipelineMetrics.bandwidthKbps} Kbps</span></div>
           <div className="flex justify-between"><span className="text-zinc-600">DROPPED TELEMETRY BLOCKS:</span><span className="text-rose-500 font-bold">{pipelineMetrics.droppedFrames}</span></div>
           <div className="pt-2 border-t border-zinc-900 text-[10px] text-zinc-500 leading-normal">
-            [SYS] Frame buffer instances mapping directly to target hardware display layout boundaries.
+            {frameProxyUrl ? "Observed frame metrics only; a functioning authenticated proxy is required." : "No authenticated frame proxy configured. Live device streaming is unavailable."}
           </div>
         </div>
       </div>
