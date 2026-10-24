@@ -1,30 +1,26 @@
 import asyncio
-from backend.pipeline.node_pipeline import NodePipelineGenerator, NodeKind
+import pytest
+from backend.pipeline.node_pipeline import NodePipelineGenerator
 
-def run(graph, generator):
-    return asyncio.run(generator.execute(graph, {}))
-
-def test_human_review_blocks_downstream_artifact_storage():
+def test_human_review_blocks_downstream_storage():
     gen = NodePipelineGenerator()
-    graph = gen.create_graph("review")
-    first = gen.add_node(graph, NodeKind.INFERENCE, "research")
-    gate = gen.add_node(graph, NodeKind.HUMAN_REVIEW, "review")
-    store = gen.add_node(graph, NodeKind.ARTIFACT_STORE, "storage")
-    gen.connect(graph, first.id, gate.id)
-    gen.connect(graph, gate.id, store.id)
-    result = run(graph, gen)
+    graph = gen.create_pipeline("approval-gate")
+    first = graph.add_node("research", "research_agent")
+    review = graph.add_node("review", "human_review_gate")
+    store = graph.add_node("store", "storage")
+    graph.connect(first, review)
+    graph.connect(review, store)
+    result = asyncio.run(gen.execute(graph, {}))
     assert result["status"] == "awaiting_approval"
-    assert result["nodes"][gate.id] == "awaiting_approval"
-    assert result["nodes"][store.id] == "idle"
-    assert store.id not in result["results"]
+    assert review.status == "awaiting_approval"
+    assert store.status == "pending"
 
-def test_cycle_never_reports_success():
+def test_cycle_is_rejected():
     gen = NodePipelineGenerator()
-    graph = gen.create_graph("cyclic")
-    first = gen.add_node(graph, NodeKind.CONDITION, "a")
-    second = gen.add_node(graph, NodeKind.CONDITION, "b")
-    gen.connect(graph, first.id, second.id)
-    gen.connect(graph, second.id, first.id)
-    result = run(graph, gen)
-    assert result["status"] == "failed"
-    assert all(status == "failed" for status in result["nodes"].values())
+    graph = gen.create_pipeline("cycle")
+    a = graph.add_node("a", "research_agent")
+    b = graph.add_node("b", "storage")
+    graph.connect(a, b)
+    graph.connect(b, a)
+    with pytest.raises(ValueError, match="Cycle detected"):
+        asyncio.run(gen.execute(graph, {}))

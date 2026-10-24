@@ -1,6 +1,6 @@
 """OpenMinds Control Plane — working entry with auth on privileged routes."""
 from __future__ import annotations
-import json, uuid
+import json, uuid, os, secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 from fastapi import FastAPI, HTTPException, Depends, Header
@@ -43,9 +43,17 @@ async def startup():
             state.redis = None
 
 def require_auth(authorization: Optional[str] = Header(None)):
+    # Temporary single-operator gate. Replace with tenant-scoped, revocable
+    # sessions before enabling multi-user or third-party integrations.
+    expected = os.getenv("OPENMINDS_OPERATOR_TOKEN", "")
+    if not expected:
+        raise HTTPException(503, "Authentication not configured")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Missing Bearer token")
-    return authorization.removeprefix("Bearer ").strip()
+    token = authorization.removeprefix("Bearer ").strip()
+    if not secrets.compare_digest(token, expected):
+        raise HTTPException(401, "Invalid token")
+    return "operator"
 
 class PipelineRequest(BaseModel):
     name: str = "agent_swarm_v1"
@@ -132,3 +140,22 @@ async def telemetry_summary(_=Depends(require_auth)):
 async def register_runner(runner_id: str, capacity: int = 1, _=Depends(require_auth)):
     state.runners[runner_id] = {"runner_id": runner_id, "capacity": capacity, "status": "active"}
     return {"runner_id": runner_id, "status": "registered"}
+
+
+@app.get("/integrations/catalog")
+async def integrations_catalog(_=Depends(require_auth)):
+    """License-aware integration registry; no live connection status implied."""
+    from backend.integrations.catalog import public_integrations
+    items = public_integrations()
+    return {"integrations": items, "count": len(items), "runtime_status": "not_probed"}
+
+
+class MCPPermissionRequest(BaseModel):
+    tool: str
+
+@app.post("/mcp/call")
+async def mcp_capability_check(body: MCPPermissionRequest, _=Depends(require_auth)):
+    """Policy preflight only. No MCP tool is executed and client approval is ignored."""
+    from backend.mcp_gate import check
+    check(body.tool, "admin", False)
+    return {"tool": body.tool, "status": "capability_checked_not_executed"}
