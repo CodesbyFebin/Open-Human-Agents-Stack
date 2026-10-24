@@ -10,7 +10,7 @@ def test_agent_code_requires_auth(monkeypatch):
 
 def test_tasks_requires_auth(monkeypatch):
     monkeypatch.setenv("OPENMINDS_OPERATOR_TOKEN", "test-operator-credential")
-    r = client.get("/tasks")
+    r = client.get("/board/issues")
     assert r.status_code == 401
 
 def test_arbitrary_bearer_token_not_accepted(monkeypatch):
