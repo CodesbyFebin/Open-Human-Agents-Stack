@@ -1,0 +1,49 @@
+name: Compose boot qualification
+
+on:
+  pull_request:
+    paths:
+      - "docker/**"
+      - "Dockerfile.*"
+      - "backend/**"
+      - "ui/**"
+      - ".github/workflows/compose-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  boot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate configuration
+        run: docker compose -f docker/docker-compose.yml config --quiet
+      - name: Build and start actual services
+        run: docker compose -f docker/docker-compose.yml up --build --detach --wait --wait-timeout 240
+      - name: Record control plane and frontend response
+        run: |
+          mkdir -p qualification
+          curl --fail --silent --show-error --retry 15 --retry-delay 2 --retry-connrefused http://127.0.0.1:8000/health -o qualification/health.json
+          python3 -c 'import json; d=json.load(open("qualification/health.json")); assert d["service"] == "openminds-control-plane"; assert d["status"] in ("operational", "degraded")'
+          curl --fail --silent --show-error --retry 15 --retry-delay 2 --retry-connrefused http://127.0.0.1:3000/ -o /dev/null
+          docker compose -f docker/docker-compose.yml ps > qualification/compose-ps.txt
+          docker compose -f docker/docker-compose.yml config --services > qualification/services.txt
+          python3 -m json.tool qualification/health.json
+      - name: Collect diagnostics
+        if: always()
+        run: |
+          mkdir -p qualification
+          docker compose -f docker/docker-compose.yml ps > qualification/final-compose-ps.txt || true
+          docker compose -f docker/docker-compose.yml logs --no-color --tail 100 > qualification/compose-logs.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openminds-compose-boot-evidence
+          path: qualification/
+          retention-days: 7
+      - name: Stop disposable services
+        if: always()
+        run: docker compose -f docker/docker-compose.yml down --remove-orphans
