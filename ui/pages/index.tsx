@@ -43,6 +43,7 @@ export default function Home() {
   const [newOpen, setNewOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const responses = await Promise.allSettled([
@@ -96,7 +97,8 @@ export default function Home() {
         event.preventDefault();
         setCommandOpen(open => !open);
       }
-      if (event.key === "Escape") setCommandOpen(false);
+      if (event.key === "Escape") { setCommandOpen(false); setShortcutsOpen(false); }
+      if (event.key === "?" && !["INPUT", "TEXTAREA", "SELECT"].includes((event.target as HTMLElement).tagName)) setShortcutsOpen(true);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -215,7 +217,7 @@ export default function Home() {
 
       {commandOpen && <div className="om-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setCommandOpen(false); }}><section className="om-command-dialog" role="dialog" aria-modal="true" aria-label="Command palette"><input autoFocus value={commandQuery} onChange={event => setCommandQuery(event.target.value)} aria-label="Find a module" placeholder="Search views and commands..." /><div className="om-command-list">{nav.filter(item => item.label.toLowerCase().includes(commandQuery.toLowerCase())).map(item => <button key={item.id} type="button" onClick={() => { setView(item.id); setCommandOpen(false); setCommandQuery(""); }}><span>{item.glyph}</span>{item.label}<small>Open view</small></button>)}{nav.every(item => !item.label.toLowerCase().includes(commandQuery.toLowerCase())) && <p>No matching views</p>}</div><p>Navigation only. This palette does not execute arbitrary commands.</p></section></div>}
 
-      <style>{`
+      {shortcutsOpen && <div className="om-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setShortcutsOpen(false); }}><section className="om-command-dialog" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts"><div className="om-dialog-head"><h2>Keyboard shortcuts</h2><button type="button" onClick={() => setShortcutsOpen(false)} aria-label="Close shortcuts">✕</button></div><p>Ctrl/⌘ + K — Open module navigation</p><p>? — Show shortcuts</p><p>Escape — Close dialogs</p></section></div>\n      <style>{`
         .om-window-controls{display:flex;gap:6px;margin-right:10px}.om-window-controls i{width:9px;height:9px;border-radius:50%;background:#ff5f57}.om-window-controls i:nth-child(2){background:#febc2e}.om-window-controls i:nth-child(3){background:#28c840}
         .om-tabbar{display:flex;gap:4px;overflow-x:auto;padding:7px 22px;border-bottom:1px solid #2a2a36;background:#14141a}.om-tabbar button{border:0;border-radius:6px;background:none;color:#9898a8;font-size:11px;padding:8px 11px;white-space:nowrap}.om-tabbar button.selected{background:#2e2e3a;color:#e8e8f0;box-shadow:inset 0 -2px #22c55e}.om-tabbar button:hover{color:white;background:#24242e}
         .om-command-trigger{border:1px solid #333340;border-radius:8px;background:#1a1a22;color:#a0a0b8;margin:12px 5px;padding:10px;display:flex;align-items:center;justify-content:space-between;text-align:left;font-size:11px;gap:8px}.om-command-trigger kbd{color:#686878;border:1px solid #333340;border-radius:4px;padding:2px 4px}
