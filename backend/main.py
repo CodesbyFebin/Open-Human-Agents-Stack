@@ -88,27 +88,44 @@ from .db import execute as db_execute
 
 class MCPCall(BaseModel):
     tool: str
-    approved: bool = False
 
 class Approval(BaseModel):
     decision: str  # approved | rejected
 
 @app.post("/mcp/call")
 async def mcp_call(body: MCPCall, user=Depends(get_current_user)):
-    mcp_check(body.tool, user["role"], body.approved)
-    return {"tool": body.tool, "status": "allowed", "org_id": str(user["org_id"])}
+    # Client input cannot authorize its own privileged tool invocation.
+    # This endpoint is a capability check only; no tool is executed here.
+    mcp_check(body.tool, user["role"], False)
+    return {"tool": body.tool, "status": "capability_checked_not_executed", "org_id": str(user["org_id"])}
 
 @app.post("/tasks/{task_id}/approve")
 async def approve_task(task_id: str, body: Approval, user=Depends(get_current_user)):
-    if user["role"] not in ("admin", "reviewer", "member"):
-        raise HTTPException(403, "Cannot approve")
-    db_execute(
-        "INSERT INTO approvals (task_id, reviewer_id, decision) VALUES (%s, %s, %s)",
-        (task_id, user["id"], body.decision)
-    )
-    new_status = "approved" if body.decision == "approved" else "rejected"
-    db_execute("UPDATE tasks SET status=%s, updated_at=now() WHERE id=%s AND org_id=%s",
-               (new_status, task_id, user["org_id"]))
+    from .db import get_conn
+    if user["role"] not in ("admin", "reviewer"):
+        raise HTTPException(403, "Reviewer or admin role required")
+    if body.decision not in ("approved", "rejected"):
+        raise HTTPException(422, "Invalid decision")
+    # Ownership check, approval record, and state transition share one transaction.
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT status FROM tasks WHERE id=%s AND org_id=%s FOR UPDATE",
+                (task_id, user["org_id"])
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise HTTPException(404, "Task not found")
+            if row[0] != "pending":
+                raise HTTPException(409, "Task is not awaiting review")
+            cur.execute(
+                "INSERT INTO approvals (task_id, reviewer_id, decision) VALUES (%s, %s, %s)",
+                (task_id, user["id"], body.decision)
+            )
+            cur.execute(
+                "UPDATE tasks SET status=%s, updated_at=now() WHERE id=%s AND org_id=%s",
+                (body.decision, task_id, user["org_id"])
+            )
     return {"task_id": task_id, "decision": body.decision}
 
 @app.post("/tasks/{task_id}/enqueue")
@@ -119,7 +136,8 @@ async def enqueue_task(task_id: str, user=Depends(get_current_user)):
         raise HTTPException(404, "Task not found")
     if row["status"] != "approved":
         raise HTTPException(403, "Task must be approved before enqueue")
-    enqueue({"id": task_id, "code": f"print({row['title']!r})", "org_id": str(user["org_id"])})
+    # Queue only an identifier. Never transform untrusted task titles into code.
+    enqueue({"id": task_id, "org_id": str(user["org_id"])})
     db_execute("UPDATE tasks SET status='queued', updated_at=now() WHERE id=%s", (task_id,))
     return {"task_id": task_id, "status": "queued"}
 
