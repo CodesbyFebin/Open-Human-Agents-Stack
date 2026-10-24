@@ -44,7 +44,7 @@ jobs:
             postgres:16-alpine psql -h localhost -U openminds openminds \
             < database/init/01_schema.sql || psql "postgresql://openminds:openminds@localhost:5432/openminds" -f database/init/01_schema.sql
       - name: Lint
-        run: ruff check backend/ agents/ --strict
+        run: ruff check backend/ agents/
       - name: Type check
         run: mypy backend/ --ignore-missing-imports
       - name: Tests
