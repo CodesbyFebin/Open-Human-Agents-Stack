@@ -16,14 +16,22 @@ class MobileVisionDriver:
             raise ValueError("Unsupported execution matrix platform specified.")
 
     def parse_vision_element_bounds(self, prediction_payload: Dict[str, Any], screen_width: int, screen_height: int) -> Tuple[int, int]:
-        box = prediction_payload.get("box_2d", [0, 0, 0, 0])
-        ymin, xmin, ymax, xmax = box[0], box[1], box[2], box[3]
-        target_x_percent = (xmin + xmax) / 2.0 / 1000.0
-        target_y_percent = (ymin + ymax) / 2.0 / 1000.0
-        return int(target_x_percent * screen_width), int(target_y_percent * screen_height)
+        box = prediction_payload.get("box_2d")
+        if not isinstance(box, (list, tuple)) or len(box) != 4:
+            raise ValueError("A four-coordinate box_2d is required")
+        if not all(isinstance(value, (int, float)) and 0 <= value <= 1000 for value in box):
+            raise ValueError("Coordinates must be normalized to 0..1000")
+        ymin, xmin, ymax, xmax = box
+        if not (xmin < xmax and ymin < ymax and screen_width > 0 and screen_height > 0):
+            raise ValueError("Invalid bounds or viewport")
+        x = min(screen_width - 1, int((xmin + xmax) * screen_width / 2000))
+        y = min(screen_height - 1, int((ymin + ymax) * screen_height / 2000))
+        return x, y
 
     def dispatch_native_touch_event(self, coordinates: Tuple[int, int]) -> bool:
         x, y = coordinates
+        if not (isinstance(x, int) and isinstance(y, int) and x >= 0 and y >= 0):
+            raise ValueError("Invalid touch coordinates")
         if self.platform == "ANDROID":
             cmd = ["adb", "-s", self.device_id, "shell", "input", "tap", str(x), str(y)]
             try:
@@ -35,8 +43,8 @@ class MobileVisionDriver:
             except subprocess.TimeoutExpired:
                 logging.error("Android bridge execution loop hung indefinitely.")
         elif self.platform == "IOS":
-            logging.info(f"Routing virtual XCTest unified touch payload to iOS host device node: X={x}, Y={y}")
-            return True
+            logging.warning("iOS touch relay is not implemented; no event dispatched")
+            return False
         return False
 
     def sync_device_view_hierarchy(self, screenshot_path: str, layout_dump_path: str) -> Optional[Dict[str, Any]]:
