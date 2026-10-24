@@ -6,22 +6,22 @@ from backend.worker import run_isolated, process_job
 
 def test_caller_cannot_self_approve_mcp_tool(monkeypatch):
     monkeypatch.setenv("OPENMINDS_OPERATOR_TOKEN", "test-operator-credential")
-    try:
-        with TestClient(app) as client:
-            result = client.post("/mcp/call", json={"tool": "shell", "approved": True}, headers={"Authorization": "Bearer test-operator-credential"})
-        assert result.status_code == 403
-    finally:
-        pass
+    with TestClient(app) as client:
+        result = client.post(
+            "/mcp/call", json={"tool": "shell", "approved": True},
+            headers={"Authorization": "Bearer test-operator-credential"},
+        )
+    assert result.status_code == 403
 
 def test_mcp_check_does_not_claim_tool_executed(monkeypatch):
-    app.dependency_overrides[get_current_user] = lambda: USER
-    try:
-        with TestClient(app) as client:
-            result = client.post("/mcp/call", json={"tool": "read_file"}, headers={"Authorization": "Bearer test-operator-credential"})
-        assert result.status_code == 200
-        assert result.json()["status"] == "capability_checked_not_executed"
-    finally:
-        app.dependency_overrides.clear()
+    monkeypatch.setenv("OPENMINDS_OPERATOR_TOKEN", "test-operator-credential")
+    with TestClient(app) as client:
+        result = client.post(
+            "/mcp/call", json={"tool": "read_file"},
+            headers={"Authorization": "Bearer test-operator-credential"},
+        )
+    assert result.status_code == 200
+    assert result.json()["status"] == "capability_checked_not_executed"
 
 def test_worker_refuses_unverified_code_job(monkeypatch):
     import backend.worker as worker
