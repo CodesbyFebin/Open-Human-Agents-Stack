@@ -1,5 +1,25 @@
 > **SCAFFOLD / v0.3** — Architecture is designed; wiring is in progress. This is not a production release. See [Status](#status).
 
+## Live proof (verified 2026-10-24)
+
+```
+GET /health
+{"status":"degraded","service":"openminds-control-plane","version":"2.3.0","redis":false}
+
+POST /pipeline/run  (Bearer)
+{"status":"awaiting_approval","steps_executed":3}
+  research  completed
+  code      completed
+  review    awaiting_approval   ← fail-closed gate
+
+POST /board/issues (Bearer) → {"status":"created"}
+POST /agent/code   (no auth) → 401
+```
+
+Tests: `6 passed` (`test_pipeline`, `test_api`, `test_health`).
+
+
+
 # OpenMinds — Open Human Agents Stack
 <img width="2172" height="724" alt="Open Human Agents Command Center" src="https://github.com/user-attachments/assets/6e5908f3-4dc2-4d02-868d-da642f7b875b" />
 
