@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # Primary Database Engine Cluster Node
+  om-postgres-primary:
+    image: postgres:17-alpine
+    container_name: om-postgres-primary-prod
+    environment:
+      POSTGRES_DB: openminds_production
+      POSTGRES_USER: orchestrator_admin
+      POSTGRES_PASSWORD: ${OM_PROD_DB_PASSWORD:?Shared DB key definition missing}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - om_primary_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: '8.0'
+          memory: 16GB
+        reservations:
+          cpus: '4.0'
+          memory: 8GB
+    command: >
+      postgres 
+      -c wal_level=replica 
+      -c max_wal_senders=10 
+      -c max_connections=200 
+      -c shared_buffers=4GB 
+      -c effective_cache_size=12GB
+    networks:
+      - openminds-prod-mesh
+
+  # Secondary Read-Replica Node
+  om-postgres-replica:
+    image: postgres:17-alpine
+    container_name: om-postgres-replica-prod
+    environment:
+      POSTGRES_DB: openminds_production
+      POSTGRES_USER: orchestrator_admin
+      POSTGRES_PASSWORD: ${OM_PROD_DB_PASSWORD:?Shared DB key definition missing}
+    volumes:
+      - om_replica_pg_data:/var/lib/postgresql/data
+    depends_on:
+      - om-postgres-primary
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8GB
+    networks:
+      - openminds-prod-mesh
+
+  # High-Availability Terminal IO Caching Layer
+  om-redis-cluster:
+    image: redis:7.4-alpine
+    container_name: om-redis-cluster-prod
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - om_redis_cache_store:/data
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4GB
+    networks:
+      - openminds-prod-mesh
+
+  # Low-Latency Stateless WebSocket / Terminal Relay Node
+  om-terminal-relay:
+    image: openminds/terminal-relay:latest
+    container_name: om-terminal-relay-prod
+    environment:
+      RELAY_LISTEN_PORT: 8080
+      REDIS_ENDPOINT: om-redis-cluster:6379
+      CONTROL_PLANE_URL: http://om-core-backend:9090
+      IS_PRODUCTION_ENVIRONMENT: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - om-redis-cluster
+    deploy:
+      mode: replicated
+      replicas: 3
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2GB
+    networks:
+      - openminds-prod-mesh
+
+  # Core API Service Control Plane
+  om-core-backend:
+    image: openminds/core-backend:latest
+    container_name: om-core-backend-prod
+    environment:
+      DATABASE_DSN: "postgres://orchestrator_admin:${OM_PROD_DB_PASSWORD}@om-postgres-primary:5432/openminds_production?sslmode=verify-full"
+      REDIS_DSN: "redis://om-redis-cluster:6379/0"
+      GRPC_SERVER_PORT: 9090
+      MTLS_CA_CERT_PATH: /etc/openminds/certs/ca.crt
+      MTLS_SERVER_CERT_PATH: /etc/openminds/certs/server.crt
+      MTLS_SERVER_KEY_PATH: /etc/openminds/certs/server.key
+    volumes:
+      - /etc/openminds/certs:/etc/openminds/certs:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - om-postgres-primary
+      - om-redis-cluster
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8GB
+    networks:
+      - openminds-prod-mesh
+
+volumes:
+  om_primary_pg_data:
+    driver: local
+  om_replica_pg_data:
+    driver: local
+  om_redis_cache_store:
+    driver: local
+
+networks:
+  openminds-prod-mesh:
+    driver: overlay
+    attachable: true
