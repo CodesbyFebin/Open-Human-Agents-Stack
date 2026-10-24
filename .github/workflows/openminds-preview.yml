@@ -1,0 +1,38 @@
+name: OpenMinds v2 static prototype preview
+
+on:
+  pull_request:
+    paths:
+      - "public/previews/openminds-v2-prototype.html"
+      - ".github/workflows/openminds-preview.yml"
+  workflow_dispatch:
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install playwright
+      - run: python -m playwright install --with-deps chromium
+      - name: Render preview and capture screenshot
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 --directory public > /tmp/om-preview-http.log 2>&1 &
+          python -c 'import asyncio; from playwright.async_api import async_playwright
+          async def main():
+              async with async_playwright() as p:
+                  browser = await p.chromium.launch()
+                  page = await browser.new_page(viewport={"width": 1600, "height": 1000}, device_scale_factor=1)
+                  await page.goto("http://127.0.0.1:8765/previews/openminds-v2-prototype.html", wait_until="domcontentloaded")
+                  await page.screenshot(path="openminds-v2-preview.png", full_page=True)
+                  assert "Open Minds" in await page.title()
+                  await browser.close()
+          asyncio.run(main())'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openminds-v2-static-preview
+          path: openminds-v2-preview.png
+          if-no-files-found: error
