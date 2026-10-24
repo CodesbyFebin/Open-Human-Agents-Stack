@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "policy": "Licenses are inspected snapshots, not legal advice. Restricted, unknown and candidate entries are never source-imported by default.",
+  "upstreams": [
+    {
+      "id": "dify",
+      "repository": "langgenius/dify",
+      "url": "https://github.com/langgenius/dify",
+      "layer": "orchestration",
+      "mode": "restricted-service",
+      "license": "Modified Apache 2.0",
+      "notes": "multi-tenant and branding restrictions"
+    },
+    {
+      "id": "multica",
+      "repository": "multica-ai/multica",
+      "url": "https://github.com/multica-ai/multica",
+      "layer": "human-agent-board",
+      "mode": "restricted-service",
+      "license": "Multica License",
+      "notes": "hosted and embedded product restrictions"
+    },
+    {
+      "id": "agentsmesh",
+      "repository": "AgentsMesh/AgentsMesh",
+      "url": "https://github.com/AgentsMesh/AgentsMesh",
+      "layer": "fleet",
+      "mode": "restricted-service",
+      "license": "BUSL-1.1",
+      "notes": "production use restricted until change date"
+    },
+    {
+      "id": "karpathy-skills",
+      "repository": "multica-ai/andrej-karpathy-skills",
+      "url": "https://github.com/multica-ai/andrej-karpathy-skills",
+      "layer": "behavior",
+      "mode": "license-review",
+      "license": "UNVERIFIED",
+      "notes": "no root LICENSE found"
+    },
+    {
+      "id": "ensemble",
+      "repository": "MeloMei/ensemble",
+      "url": "https://github.com/MeloMei/ensemble",
+      "layer": "desktop",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "preserve notice"
+    },
+    {
+      "id": "taku-ui",
+      "repository": "Taku-OS/taku-ui",
+      "url": "https://github.com/Taku-OS/taku-ui",
+      "layer": "desktop-ui",
+      "mode": "license-review",
+      "license": "UNVERIFIED",
+      "notes": "license not established"
+    },
+    {
+      "id": "pydantic-ai",
+      "repository": "pydantic/pydantic-ai",
+      "url": "https://github.com/pydantic/pydantic-ai",
+      "layer": "agent-framework",
+      "mode": "dependency",
+      "license": "MIT",
+      "notes": "prefer package dependency"
+    },
+    {
+      "id": "comfyui",
+      "repository": "Comfy-Org/ComfyUI",
+      "url": "https://github.com/Comfy-Org/ComfyUI",
+      "layer": "media",
+      "mode": "external-service",
+      "license": "GPL-3.0",
+      "notes": "separate service boundary and license compliance"
+    },
+    {
+      "id": "ruflo",
+      "repository": "ruvnet/ruflo",
+      "url": "https://github.com/ruvnet/ruflo",
+      "layer": "swarm",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "optional adapter"
+    },
+    {
+      "id": "orca",
+      "repository": "stablyai/orca",
+      "url": "https://github.com/stablyai/orca",
+      "layer": "agent-runtime",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "optional adapter"
+    },
+    {
+      "id": "paperclip",
+      "repository": "paperclipai/paperclip",
+      "url": "https://github.com/paperclipai/paperclip",
+      "layer": "org-ops",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "optional adapter"
+    },
+    {
+      "id": "ecc",
+      "repository": "affaan-m/ECC",
+      "url": "https://github.com/affaan-m/ECC",
+      "layer": "skills",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "preserve notices"
+    },
+    {
+      "id": "freellmapi",
+      "repository": "tashfeenahmed/freellmapi",
+      "url": "https://github.com/tashfeenahmed/freellmapi",
+      "layer": "model-gateway",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "verify provider terms and quotas separately"
+    },
+    {
+      "id": "octop",
+      "repository": "TencentCloud/Octop",
+      "url": "https://github.com/TencentCloud/Octop",
+      "layer": "assistant",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "optional adapter"
+    },
+    {
+      "id": "t3code",
+      "repository": "pingdotgg/t3code",
+      "url": "https://github.com/pingdotgg/t3code",
+      "layer": "coding",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "optional adapter"
+    },
+    {
+      "id": "openshell",
+      "repository": "NVIDIA/OpenShell",
+      "url": "https://github.com/NVIDIA/OpenShell",
+      "layer": "sandbox",
+      "mode": "external-service",
+      "license": "Apache-2.0",
+      "notes": "requires isolated runner configuration"
+    },
+    {
+      "id": "hindsight",
+      "repository": "vectorize-io/hindsight",
+      "url": "https://github.com/vectorize-io/hindsight",
+      "layer": "memory",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "optional memory adapter"
+    },
+    {
+      "id": "context-mode",
+      "repository": "mksglu/context-mode",
+      "url": "https://github.com/mksglu/context-mode",
+      "layer": "context",
+      "mode": "restricted-service",
+      "license": "Elastic-2.0",
+      "notes": "service restrictions apply"
+    },
+    {
+      "id": "bytebase",
+      "repository": "bytebase/bytebase",
+      "url": "https://github.com/bytebase/bytebase",
+      "layer": "db-governance",
+      "mode": "external-service",
+      "license": "MIXED",
+      "notes": "enterprise paths have separate license"
+    },
+    {
+      "id": "appwrite",
+      "repository": "appwrite/appwrite",
+      "url": "https://github.com/appwrite/appwrite",
+      "layer": "auth-storage",
+      "mode": "external-service",
+      "license": "BSD-3-Clause",
+      "notes": "separately managed service"
+    },
+    {
+      "id": "mobile-use",
+      "repository": "minitap-ai/mobile-use",
+      "url": "https://github.com/minitap-ai/mobile-use",
+      "layer": "mobile",
+      "mode": "candidate",
+      "license": "Apache-2.0",
+      "notes": "two similarly named projects; confirm selection"
+    },
+    {
+      "id": "mindshub",
+      "repository": "mindsdb/mindshub",
+      "url": "https://github.com/mindsdb/mindshub",
+      "layer": "workspace",
+      "mode": "source-eligible",
+      "license": "MIT",
+      "notes": "optional integration"
+    }
+  ]
+}
