@@ -46,6 +46,7 @@ jobs:
           node-version: "20"
       - run: pip install -r requirements.txt
       - run: npm install --no-audit --no-fund
+      - run: npm run build
       - run: python -m playwright install --with-deps chromium
       - name: Apply database schema
         run: |
@@ -55,7 +56,7 @@ jobs:
       - name: Start API and Next.js
         run: |
           uvicorn backend.main:app --host 127.0.0.1 --port 8000 > /tmp/openminds-api.log 2>&1 &
-          npm run dev -- -H 127.0.0.1 -p 3000 > /tmp/openminds-ui.log 2>&1 &
+          npm run start -- -H 127.0.0.1 -p 3000 > /tmp/openminds-ui.log 2>&1 &
           for i in $(seq 1 50); do
             if curl -sf http://127.0.0.1:8000/health | grep -q operational && curl -sf http://127.0.0.1:3000/ > /dev/null; then exit 0; fi
             sleep 2
