@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  om-appwrite-baas:
+    image: appwrite/appwrite:1.6.0
+    container_name: om-appwrite-baas-prod
+    ports:
+      - "8090:80"
+      - "8443:443"
+    environment:
+      - _APP_ENV=production
+      - _APP_PROJECT_ID=${OM_APPWRITE_PROJECT_ID:?Appwrite Project ID definition key required}
+      - _APP_OPENSSL_KEY_V2=${OM_APPWRITE_SECRET_KEY:?Appwrite cryptographic security hash missing}
+      - _APP_DB_SCHEMA=openminds_baas
+      - _APP_STORAGE_LIMIT=5000000000
+    volumes:
+      - om_appwrite_uploads:/storage/uploads
+      - om_appwrite_certificates:/storage/certificates
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8GB
+    networks:
+      - openminds-extended-net
+
+  om-comfyui-renderer:
+    image: comfyanonymous/comfyui:latest-cuda
+    container_name: om-comfyui-renderer-prod
+    runtime: nvidia
+    environment:
+      - COMFYUI_LISTEN_PORT=8188
+      - EXTRA_MODEL_PATHS=/mnt/shared_models
+    volumes:
+      - om_shared_ai_models:/mnt/shared_models
+      - om_render_outputs:/workspace/ComfyUI/output
+    ports:
+      - "8188:8188"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - openminds-extended-net
+
+  om-mobile-vision-bridge:
+    image: openminds/mobile-vision-driver:latest
+    container_name: om-mobile-vision-bridge-prod
+    environment:
+      - ADB_SERVER_SOCKET=tcp:om-adb-host:5037
+      - INSTANCE_ENVIRONMENT=PRODUCTION
+    volumes:
+      - om_mobile_workspace_logs:/var/log/mobile_use
+    depends_on:
+      - om-appwrite-baas
+    deploy:
+      mode: replicated
+      replicas: 2
+    networks:
+      - openminds-extended-net
+
+volumes:
+  om_appwrite_uploads:
+    driver: local
+  om_appwrite_certificates:
+    driver: local
+  om_shared_ai_models:
+    driver: local
+  om_render_outputs:
+    driver: local
+  om_mobile_workspace_logs:
+    driver: local
+
+networks:
+  openminds-extended-net:
+    driver: overlay
+    attachable: true
