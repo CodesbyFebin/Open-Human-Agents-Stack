@@ -97,7 +97,8 @@ class NodePipelineGenerator:
                 if all(inp in completed for inp in graph.nodes[nid].inputs)
             ]
             if not ready:
-                break  # cycle or missing deps
+                # Unresolved dependencies are either gated or invalid cycles. Never report success.
+                break
             for nid in ready:
                 node = graph.nodes[nid]
                 node.status = "running"
@@ -122,6 +123,11 @@ class NodePipelineGenerator:
                 pending.remove(nid)
         failed = any(n.status == "failed" for n in graph.nodes.values())
         awaiting = any(n.status == "awaiting_approval" for n in graph.nodes.values())
+        if pending and not (failed or awaiting):
+            for nid in pending:
+                graph.nodes[nid].status = "failed"
+                results[nid] = {"error": "Cycle or unresolved dependency"}
+            failed = True
         status = "failed" if failed else ("awaiting_approval" if awaiting else "executed")
         return {"graph_id": graph.id, "status": status, "results": results, "nodes": {k: v.status for k, v in graph.nodes.items()}}
 

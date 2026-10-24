@@ -19,7 +19,7 @@ jobs:
           python -c "from backend.main import app; print('control plane import ok')"
           python -c "from backend.pipeline.node_pipeline import NodePipelineGenerator; print('pipeline import ok')"
       - name: Unit tests
-        run: pytest -q tests/ || true
+        run: python -m pytest -q tests/
   frontend:
     runs-on: ubuntu-latest
     steps:
