@@ -19,6 +19,14 @@ async def test_operator_console_navigation_and_empty_state():
         await page.get_by_role("button", name="Evidence").click()
         await page.get_by_text("Approval controls unavailable").wait_for()
         assert await page.get_by_role("button", name="Approval controls unavailable").is_disabled()
+        await page.get_by_role("button", name="Node flows").click()
+        await page.get_by_role("heading", name="Node flows").wait_for()
+        await page.get_by_role("button", name="Diagnostics").click()
+        await page.get_by_role("heading", name="Control-plane diagnostics").wait_for()
+        await page.get_by_role("button", name="Assets").click()
+        await page.get_by_role("heading", name="Workspace assets").wait_for()
+        await page.get_by_role("button", name="Terminal").click()
+        assert await page.get_by_role("button", name="Connect terminal unavailable").is_disabled()
         assert errors == []
         await browser.close()
 
