@@ -12,7 +12,7 @@ export function useRedisTerminal(_options: Options) {
     throw new Error('Terminal transport is not configured');
   }, []);
   return {
-    connectionState: 'DISCONNECTED' as const,
+    connectionState: 'DISCONNECTED' as 'DISCONNECTED' | 'CONNECTING' | 'STREAMING',
     terminalBufferOutput: '',
     transmitTerminalInput,
   };
