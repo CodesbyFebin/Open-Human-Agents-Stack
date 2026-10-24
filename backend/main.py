@@ -21,6 +21,7 @@ from backend.pipeline.node_pipeline import NodePipelineGenerator
 from backend.jobs.job_runner import JobRunner
 from backend.security.mcp_auth import MCPAuthenticator
 from backend.api.websocket import ConnectionManager
+from backend.mobile.device_bridge import router as mobile_router
 
 log = structlog.get_logger()
 
@@ -105,6 +106,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="OpenMinds Control Plane", version="1.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.include_router(mobile_router)
 
 
 # ─── Health ─────────────────────────────────────────────────────────────────

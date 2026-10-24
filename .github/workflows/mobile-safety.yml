@@ -1,0 +1,22 @@
+name: Mobile bridge safety
+
+on:
+  pull_request:
+    paths:
+      - "backend/mobile/**"
+      - "runners/mobile/**"
+      - "tests/test_mobile_bridge.py"
+      - "tests/test_mobile_vision_driver.py"
+      - ".github/workflows/mobile-safety.yml"
+  workflow_dispatch:
+
+jobs:
+  no-device-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install fastapi httpx pytest
+      - run: pytest -q tests/test_mobile_bridge.py tests/test_mobile_vision_driver.py
