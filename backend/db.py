@@ -1,40 +1,23 @@
-"""PostgreSQL connection helper for OpenMinds control plane."""
+"""Async SQLAlchemy engine + session management."""
+from __future__ import annotations
+
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from contextlib import contextmanager
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://openminds:openminds@localhost:5432/openminds"
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://openminds:openminds@localhost:5432/openminds")
 
-@contextmanager
-def get_conn():
-    conn = psycopg2.connect(DATABASE_URL)
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+engine = create_async_engine(DATABASE_URL, pool_size=10, max_overflow=20, echo=False)
+async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-def fetch_one(query: str, params=None):
-    with get_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, params or ())
-            return cur.fetchone()
+class Base(DeclarativeBase):
+    pass
 
-def fetch_all(query: str, params=None):
-    with get_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, params or ())
-            return cur.fetchall()
+async def get_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session
 
-def execute(query: str, params=None):
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, params or ())
-            return cur.rowcount
+async def init_db():
+    """Create tables if they don't exist (for non-Docker dev)."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

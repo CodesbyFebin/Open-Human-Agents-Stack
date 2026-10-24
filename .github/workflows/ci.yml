@@ -1,25 +1,58 @@
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
 jobs:
-  backend:
+  python:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: openminds
+          POSTGRES_PASSWORD: openminds
+          POSTGRES_DB: openminds
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U openminds"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://openminds:openminds@localhost:5432/openminds
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Import check
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Apply schema
         run: |
-          python -c "from backend.main import app; print('control plane import ok')"
-          python -c "from backend.pipeline.node_pipeline import NodePipelineGenerator; print('pipeline import ok')"
-      - name: Unit tests
-        run: python -m pytest -q tests/
+          docker run --rm -i -e PGPASSWORD=openminds \
+            postgres:16-alpine psql -h localhost -U openminds openminds \
+            < database/init/01_schema.sql || psql "postgresql://openminds:openminds@localhost:5432/openminds" -f database/init/01_schema.sql
+      - name: Lint
+        run: ruff check backend/ agents/ --strict
+      - name: Type check
+        run: mypy backend/ --ignore-missing-imports
+      - name: Tests
+        run: pytest tests/ -v --tb=short --timeout=60
+        env:
+          DATABASE_URL: postgresql+asyncpg://openminds:openminds@localhost:5432/openminds
+          REDIS_URL: redis://localhost:6379/0
+
   frontend:
     runs-on: ubuntu-latest
     steps:
@@ -27,9 +60,55 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Install
-        run: npm install
-      - name: Type check (blocking)
-        run: npx tsc --noEmit
+      - run: cd ui && npm ci
+      - name: Type check
+        run: cd ui && npx tsc --noEmit
       - name: Build
-        run: npm run build
+        run: cd ui && npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend
+        run: docker build -f Dockerfile.backend -t openminds-backend:ci .
+      - name: Build frontend
+        run: docker build -f Dockerfile.frontend -t openminds-frontend:ci .
+      - name: Smoke test
+        run: |
+          docker run -d --name om-test -p 8000:8000 \
+            -e DATABASE_URL=postgresql+asyncpg://openminds:openminds@host.docker.internal:5432/openminds \
+            -e REDIS_URL=redis://host.docker.internal:6379/0 \
+            --add-host=host.docker.internal:host-gateway \
+            openminds-backend:ci
+          sleep 5
+          curl -sf http://localhost:8000/health | grep -q "operational"
+          docker stop om-test
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [python, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -r requirements.txt
+      - run: cd ui && npm ci
+      - name: Install Playwright
+        run: playwright install --with-deps chromium
+      - name: Run E2E
+        run: |
+          # Start services
+          docker compose -f docker/docker-compose.yml up -d postgres redis
+          sleep 5
+          psql "postgresql://openminds:openminds@localhost:5432/openminds" -f database/init/01_schema.sql
+          uvicorn backend.main:app --port 8000 &
+          cd ui && npm run dev -- -p 3000 &
+          sleep 10
+          cd ..
+          pytest tests/test_e2e_browser.py -v --tb=short
+          docker compose -f docker/docker-compose.yml down
