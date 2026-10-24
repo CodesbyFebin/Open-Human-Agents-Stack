@@ -148,3 +148,14 @@ async def integrations_catalog(_=Depends(require_auth)):
     from backend.integrations.catalog import public_integrations
     items = public_integrations()
     return {"integrations": items, "count": len(items), "runtime_status": "not_probed"}
+
+
+class MCPPermissionRequest(BaseModel):
+    tool: str
+
+@app.post("/mcp/call")
+async def mcp_capability_check(body: MCPPermissionRequest, _=Depends(require_auth)):
+    """Policy preflight only. No MCP tool is executed and client approval is ignored."""
+    from backend.mcp_gate import check
+    check(body.tool, "admin", False)
+    return {"tool": body.tool, "status": "capability_checked_not_executed"}
