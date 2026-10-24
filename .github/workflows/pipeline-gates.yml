@@ -16,5 +16,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install pytest pytest-asyncio sqlalchemy asyncpg structlog
+      - run: pip install pytest pytest-asyncio 'sqlalchemy[asyncio]' asyncpg structlog
       - run: pytest -q tests/test_pipeline_fail_closed.py
