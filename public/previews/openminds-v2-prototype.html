@@ -2028,7 +2028,7 @@ function renderCard(issue) {
     <div class="issue-card" draggable="true" data-id="${issue.id}"
          ondragstart="handleDragStart(event,'${issue.id}')"
          ondragend="handleDragEnd(event)"
-         onclick="${issue.working ? `switchView('runs')` : `showToast('${issue.id}: ${issue.title.replace(/'/g,"\\'")}','info')`}">
+         onclick="${issue.working ? `switchView('runs')` : `showIssueInfo('${issue.id}')`}">
       <div class="issue-card-top">
         <div class="issue-id-row">
           <div class="issue-bar-icon" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -2169,7 +2169,7 @@ function renderTasks() {
         ${t.time ? `<span class="task-time">${t.time}</span>` : ''}
       </div>
       ${t.sub ? `<div class="task-sub"><span class="task-sub-icon" aria-hidden="true">◎</span><span style="color:var(--fg-muted);">${t.sub}</span></div>` : ''}
-      ${t.icons ? `<div class="task-icons-row">${t.icons.map(ic => `<div class="task-icon ${ic==='●'?'red':ic==='✓'?'green':ic===''?'orange':ic===''?'purple':'dark'}" aria-hidden="true">${ic}</div>`).join('')}<span style="margin-left:auto;font-size:10px;color:var(--fg-dim);" aria-hidden="true">›</span></div>` : ''}
+      ${t.icons ? `<div class="task-icons-row">${t.icons.map(ic => `<div class="task-icon ${ic==='●'?'red':ic==='✓'?'green':ic==='⚡'?'orange':ic==='✦'?'purple':'dark'}" aria-hidden="true">${ic}</div>`).join('')}<span style="margin-left:auto;font-size:10px;color:var(--fg-dim);" aria-hidden="true">›</span></div>` : ''}
     </div>
   `).join('');
 }
@@ -2549,7 +2549,7 @@ function toggleVoiceSession() {
     voiceSession.id = 'vs-' + Math.random().toString(36).slice(2, 8);
     voiceSession.transcript = [];
     orb.classList.add('active');
-    icon.textContent = '';
+    icon.textContent = '🔊';
     btn.textContent = '● Listening...';
     btn.classList.remove('primary');
     interruptBtn.style.display = 'inline-block';
@@ -2611,7 +2611,7 @@ function endVoiceSession() {
   const interruptBtn = document.getElementById('voiceInterruptBtn');
   voiceSession.active = false;
   orb.classList.remove('active');
-  icon.textContent = '️';
+  icon.textContent = '🎙️';
   btn.textContent = '● Start Session';
   btn.classList.add('primary');
   interruptBtn.style.display = 'none';
@@ -2636,7 +2636,7 @@ function selectMobileDevice(id) {
       <div style="font-size:11px;color:var(--fg-muted);">Thursday, Jan 16</div>
     </div>
     <div class="mobile-app-grid">
-      ${['📱','','📷','🗺️','','🎮','📝','','🛒','⚙️','📊','🎵'].map((icon, i) => `
+      ${['📱','💬','📷','🗺️','📧','🎮','📝','🔍','🛒','⚙️','📊','🎵'].map((icon, i) => `
         <div style="text-align:center;">
           <div class="mobile-app-icon" style="background:hsl(${i*30},60%,30%);" onclick="mobileAction('tap',{x:${0.125 + (i%4)*0.25},y:${0.3 + Math.floor(i/4)*0.25}})">${icon}</div>
           <div class="mobile-app-label">App ${i+1}</div>
@@ -2868,12 +2868,20 @@ function executeCommand(index) { if (filteredCommands[index]) { filteredCommands
 // ═══════════════════════════════════════════════════════════
 // TOAST
 // ═══════════════════════════════════════════════════════════
+function showIssueInfo(id) {
+  const issue = issues.find(item => item.id === id);
+  if (issue) showToast(`${issue.id}: ${issue.title}`, 'info');
+}
+
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   const icons = { success: '✓', error: '', warning: '', info: '' };
-  toast.innerHTML = `<span aria-hidden="true">${icons[type] || ''}</span> ${message}`;
+  const icon = document.createElement('span');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = icons[type] || '';
+  toast.append(icon, document.createTextNode(' ' + String(message)));
   container.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(20px)'; toast.style.transition = 'all 0.3s'; setTimeout(() => toast.remove(), 300); }, 2500);
 }
