@@ -1,6 +1,6 @@
 """OpenMinds Control Plane — working entry with auth on privileged routes."""
 from __future__ import annotations
-import json, uuid
+import json, uuid, os, secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 from fastapi import FastAPI, HTTPException, Depends, Header
@@ -43,9 +43,17 @@ async def startup():
             state.redis = None
 
 def require_auth(authorization: Optional[str] = Header(None)):
+    # Temporary single-operator gate. Replace with tenant-scoped, revocable
+    # sessions before enabling multi-user or third-party integrations.
+    expected = os.getenv("OPENMINDS_OPERATOR_TOKEN", "")
+    if not expected:
+        raise HTTPException(503, "Authentication not configured")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Missing Bearer token")
-    return authorization.removeprefix("Bearer ").strip()
+    token = authorization.removeprefix("Bearer ").strip()
+    if not secrets.compare_digest(token, expected):
+        raise HTTPException(401, "Invalid token")
+    return "operator"
 
 class PipelineRequest(BaseModel):
     name: str = "agent_swarm_v1"
