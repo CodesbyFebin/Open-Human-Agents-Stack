@@ -132,3 +132,11 @@ async def telemetry_summary(_=Depends(require_auth)):
 async def register_runner(runner_id: str, capacity: int = 1, _=Depends(require_auth)):
     state.runners[runner_id] = {"runner_id": runner_id, "capacity": capacity, "status": "active"}
     return {"runner_id": runner_id, "status": "registered"}
+
+
+@app.get("/integrations/catalog")
+async def integrations_catalog(_=Depends(require_auth)):
+    """License-aware integration registry; no live connection status implied."""
+    from backend.integrations.catalog import public_integrations
+    items = public_integrations()
+    return {"integrations": items, "count": len(items), "runtime_status": "not_probed"}
