@@ -1,4 +1,5 @@
 # OpenMinds — Open Human Agents Stack
+<img width="2172" height="724" alt="Open Human Agents Command Center" src="https://github.com/user-attachments/assets/6e5908f3-4dc2-4d02-868d-da642f7b875b" />
 
 **Open-source full-stack multi-human & multi-agent autonomous platform.**
 
@@ -466,6 +467,7 @@ Unit tests should accompany new executors. Integration tests can use the Docker 
 Python follows standard formatting (Black/Ruff compatible). Go uses `gofmt`. TypeScript uses the Next.js defaults. Prefer explicit structured outputs over free-form strings when crossing process boundaries.
 
 ## Roadmap
+<img width="2172" height="724" alt="Open Human Agents Mission Control" src="https://github.com/user-attachments/assets/1ecffd61-9976-44f7-a3f0-a4fe8bb7b726" />
 
 Near-term priorities:
 
