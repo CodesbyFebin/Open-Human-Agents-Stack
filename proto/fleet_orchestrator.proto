@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package openminds.fleet.v1;
+
+option go_package = "backend/pkg/fleet/v1;fleetv1";
+
+// Handles orchestration, task pipelines, and heartbeat validations across runner fleets.
+service FleetOrchestratorService {
+  // Streams bidirectional execution commands and live standard terminal bytes.
+  rpc EstablishAgentPodSession(stream ClientTerminalPayload) returns (stream RunnerTerminalPayload);
+  
+  // High-availability metric logging loop for real-time trace evaluations.
+  rpc EmitTelemetryMetrics(TelemetryMetricsPayload) returns (TelemetryIngestResponse);
+  
+  // Validates physical compute node availability and runtime capacities.
+  rpc RegisterRunnerNode(RunnerRegistrationRequest) returns (RunnerRegistrationResponse);
+  
+  // Maintains connectivity health validation checks across distributed execution pods.
+  rpc StreamHeartbeatSession(stream NodeHeartbeat) returns (stream CentralHeartbeatAck);
+}
+
+message ClientTerminalPayload {
+  string session_identity = 1;
+  uint64 sequence_index = 2;
+  bytes input_bytes = 3;
+  string target_pod_id = 4;
+  int64 client_timestamp_epoch_ms = 5;
+}
+
+message RunnerTerminalPayload {
+  string session_identity = 1;
+  uint64 sequence_index = 2;
+  bytes stdout_bytes = 3;
+  bytes stderr_bytes = 4;
+  int32 exit_code = 5;
+  int64 runner_timestamp_epoch_ms = 6;
+}
+
+message TelemetryMetricsPayload {
+  string run_identity = 1;
+  string node_identity = 2;
+  int32 prompt_tokens_consumed = 3;
+  int32 completion_tokens_consumed = 4;
+  double resource_expenditure_usd = 5;
+  int64 calculation_latency_microseconds = 6;
+  string operational_model_signature = 7;
+}
+
+message TelemetryIngestResponse {
+  bool ingestion_confirmed = 1;
+  string tracking_block_uuid = 2;
+}
+
+message RunnerRegistrationRequest {
+  string hardware_fingerprint = 1;
+  int32 max_concurrent_pod_capacity = 2;
+  repeated string local_allowlisted_agent_clis = 3;
+  string allocated_ipv4_address = 4;
+}
+
+message RunnerRegistrationResponse {
+  bool registration_approved = 1;
+  string assigned_runner_uuid = 2;
+  int64 lease_expiration_epoch_ms = 3;
+}
+
+message NodeHeartbeat {
+  string runner_uuid = 1;
+  float system_cpu_utilization = 2;
+  float system_ram_utilization_bytes = 3;
+  int32 active_pod_count = 4;
+}
+
+message CentralHeartbeatAck {
+  bool system_health_confirmed = 1;
+  bool trigger_immediate_state_sync = 2;
+}
