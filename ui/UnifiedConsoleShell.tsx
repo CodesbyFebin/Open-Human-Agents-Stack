@@ -11,7 +11,6 @@ type ActiveViewModule = 'WORKSPACE_BOARD' | 'NODE_FLOWS' | 'DIAGNOSTICS' | 'EXTE
 
 export const UnifiedConsoleShell: React.FC = () => {
   const [currentModule, setCurrentModule] = useState<ActiveViewModule>('WORKSPACE_BOARD');
-  const [clusterSystemLoad] = useState({ cpu: 34.2, ram: 58.1, activeRunners: 12 });
 
   return (
     <div className="w-full h-screen bg-zinc-950 text-zinc-100 flex flex-col font-mono text-xs overflow-hidden select-none">
@@ -38,9 +37,7 @@ export const UnifiedConsoleShell: React.FC = () => {
           </nav>
         </div>
         <div className="hidden md:flex items-center gap-4 text-[10px] text-zinc-500 border border-zinc-900 bg-zinc-950/80 px-4 py-1 rounded">
-          <div className="flex items-center gap-1.5"><span className="text-zinc-600">CPU:</span><span className="text-zinc-300 font-bold font-mono">{clusterSystemLoad.cpu}%</span></div>
-          <div className="flex items-center gap-1.5"><span className="text-zinc-600">RAM:</span><span className="text-zinc-300 font-bold font-mono">{clusterSystemLoad.ram}%</span></div>
-          <div className="flex items-center gap-1.5"><span className="text-zinc-600">RUNNERS:</span><span className="text-emerald-400 font-bold font-mono">{clusterSystemLoad.activeRunners} ONLINE</span></div>
+          <span className="text-amber-400">Live cluster metrics not connected</span>
         </div>
       </header>
       <div className="flex-1 w-full bg-zinc-950 overflow-hidden relative">
@@ -52,7 +49,7 @@ export const UnifiedConsoleShell: React.FC = () => {
             <CircuitDiagnosticConsole />
             <div className="bg-zinc-900/20 p-4 border border-zinc-900 rounded-xl space-y-2">
               <div className="text-[10px] text-indigo-400 font-bold">// DATA PLANE RELAY TOPOLOGY</div>
-              <p className="text-zinc-500 leading-normal">Multi-region primary database synchronization engine active. Replication check timelines inside sub-second processing increments.</p>
+              <p className="text-zinc-500 leading-normal">Database replication telemetry is not connected. No live replication status is available.</p>
             </div>
           </div>
         )}
