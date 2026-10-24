@@ -60,6 +60,14 @@ body {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.skip-link {
+  position: absolute; top: -40px; left: 0;
+  background: var(--accent-blue); color: #fff;
+  padding: 8px 16px; z-index: 9999;
+  transition: top 0.2s; font-size: 12px; font-weight: 600;
+  border-radius: 0 0 4px 0;
+}
+.skip-link:focus { top: 0; }
 
 .app-window {
   width: 98vw; max-width: 1600px; height: 94vh; max-height: 900px;
@@ -92,8 +100,7 @@ body {
 }
 .title-bar-logo .version-tag {
   font-size: 9px; color: var(--fg-muted); font-weight: 500;
-  background: var(--bg-panel); padding: 1px 5px; border-radius: 3px;
-  margin-left: 4px;
+  background: var(--bg-panel); padding: 1px 5px; border-radius: 3px; margin-left: 4px;
 }
 .title-bar-nav { display: flex; align-items: center; gap: 6px; margin-left: 8px; }
 .nav-arrow { color: var(--fg-muted); font-size: 14px; cursor: pointer; padding: 2px 4px; }
@@ -148,6 +155,15 @@ body {
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 .control-bar-right { display: flex; align-items: center; gap: 10px; }
+.presence-stack { display: flex; align-items: center; gap: 4px; }
+.presence-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700; margin-left: -6px;
+  border: 2px solid var(--bg-sidebar);
+}
+.presence-avatar:first-child { margin-left: 0; }
+.presence-label { font-size: 10px; color: var(--fg-muted); margin-left: 4px; }
 .agents-badge {
   display: flex; align-items: center; gap: 8px;
   padding: 4px 12px 4px 6px;
@@ -240,6 +256,7 @@ body {
 .workspace-item.active { background: var(--bg-active); color: var(--fg-primary); }
 .ws-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .ws-dot.green { background: var(--accent-green); }
+.ws-dot.orange { background: var(--accent-orange); }
 .ws-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ws-tag {
   font-size: 9px; padding: 1px 5px; border-radius: 3px;
@@ -282,7 +299,7 @@ body {
 .dashboard-content::-webkit-scrollbar { width: 5px; }
 .dashboard-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-.telemetry-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+.telemetry-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
 .telemetry-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; transition: border-color 0.15s; }
 .telemetry-card:hover { border-color: var(--fg-muted); }
 .telemetry-label { font-size: 10px; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; font-weight: 500; }
@@ -473,6 +490,32 @@ body {
 .status-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; font-family: var(--font-mono); white-space: nowrap; }
 .status-pill.sm { font-size: 10px; padding: 1px 6px; }
 
+/* Diff Viewer */
+.diff-viewer {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-top: 16px;
+  font-family: var(--font-mono); font-size: 11px; line-height: 1.6;
+}
+.diff-header {
+  padding: 8px 12px; background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.diff-filename { color: var(--fg-primary); font-weight: 600; }
+.diff-stats { font-size: 10px; }
+.diff-stats .add { color: var(--accent-green); }
+.diff-stats .del { color: var(--accent-red); }
+.diff-body { padding: 8px 0; max-height: 300px; overflow-y: auto; }
+.diff-line { padding: 0 12px; white-space: pre; }
+.diff-line.add { background: rgba(34,197,94,0.08); color: var(--accent-green); }
+.diff-line.del { background: rgba(239,68,68,0.08); color: var(--accent-red); }
+.diff-line.ctx { color: var(--fg-muted); }
+.diff-line.hunk { color: var(--accent-cyan); background: rgba(6,182,212,0.05); }
+.diff-actions {
+  padding: 10px 12px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+
 /* Activity Feed */
 .activity-feed { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; max-height: calc(100vh - 220px); overflow-y: auto; position: sticky; top: 0; }
 .activity-feed::-webkit-scrollbar { width: 4px; }
@@ -525,7 +568,7 @@ body {
 }
 .run-pipeline-btn:hover { background: #16a34a; }
 
-/* ─── Knowledge View ─── */
+/* Knowledge View */
 .knowledge-view { padding: 16px; overflow-y: auto; flex: 1; }
 .knowledge-query-box { display: flex; gap: 8px; margin-bottom: 16px; }
 .knowledge-query-input {
@@ -540,9 +583,7 @@ body {
 }
 .knowledge-result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .knowledge-result-title { font-size: 13px; font-weight: 600; color: var(--fg-primary); }
-.knowledge-similarity {
-  display: flex; align-items: center; gap: 6px; font-size: 11px;
-}
+.knowledge-similarity { display: flex; align-items: center; gap: 6px; font-size: 11px; }
 .similarity-bar { width: 60px; height: 4px; background: var(--bg-app); border-radius: 2px; overflow: hidden; }
 .similarity-fill { height: 100%; border-radius: 2px; background: var(--accent-green); }
 .knowledge-result-content { font-size: 12px; color: var(--fg-secondary); line-height: 1.5; }
@@ -555,7 +596,7 @@ body {
 }
 .knowledge-doc-item:hover { border-color: var(--accent-blue); }
 
-/* ─── Voice View ─── */
+/* Voice View */
 .voice-view {
   padding: 16px; overflow-y: auto; flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -596,7 +637,7 @@ body {
 }
 .voice-transcript-title { font-size: 11px; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 
-/* ─── Mobile View (Andee) ─── */
+/* Mobile View */
 .mobile-view { padding: 16px; overflow-y: auto; flex: 1; }
 .mobile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .mobile-devices-panel { display: flex; flex-direction: column; gap: 12px; }
@@ -654,7 +695,7 @@ body {
   font-size: 10px; color: var(--fg-muted);
 }
 
-/* ─── Workflows View ── */
+/* Workflows View */
 .workflows-view { padding: 16px; overflow-y: auto; flex: 1; }
 .workflow-card {
   background: var(--bg-card); border: 1px solid var(--border);
@@ -681,9 +722,7 @@ body {
   background: var(--bg-panel); border-radius: 6px; margin-bottom: 4px;
   font-size: 12px;
 }
-.workflow-run-status {
-  width: 8px; height: 8px; border-radius: 50%;
-}
+.workflow-run-status { width: 8px; height: 8px; border-radius: 50%; }
 .workflow-run-status.running { background: var(--accent-green); animation: pulse 1.5s infinite; }
 .workflow-run-status.completed { background: var(--accent-green); }
 .workflow-run-status.failed { background: var(--accent-red); }
@@ -695,6 +734,64 @@ body {
   font-family: var(--font-sans); font-weight: 600;
 }
 .approve-btn:hover { background: rgba(34,197,94,0.25); }
+
+/* Cost View */
+.cost-view { padding: 16px; overflow-y: auto; flex: 1; }
+.cost-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cost-table th { text-align: left; padding: 8px 12px; color: var(--fg-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+.cost-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.cost-table tr:last-child td { border-bottom: none; }
+.cost-sparkline { display: flex; align-items: flex-end; gap: 3px; height: 60px; }
+.cost-sparkline-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 4px; }
+
+/* Audit View */
+.audit-view { padding: 16px; overflow-y: auto; flex: 1; }
+.audit-row {
+  display: flex; gap: 10px; align-items: flex-start; padding: 6px 8px;
+  border-radius: 4px; font-size: 12px; transition: background 0.08s;
+}
+.audit-row:hover { background: var(--bg-hover); }
+
+/* Agent Panel */
+.agent-panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 900; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.agent-panel-overlay.active { opacity: 1; pointer-events: all; }
+.agent-panel {
+  position: fixed; top: 0; right: -380px; width: 380px; height: 100vh;
+  background: var(--bg-sidebar); border-left: 1px solid var(--border);
+  z-index: 901; transition: right 0.25s ease; overflow-y: auto;
+  box-shadow: -10px 0 40px rgba(0,0,0,0.4);
+}
+.agent-panel.active { right: 0; }
+.agent-panel-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.agent-panel-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+}
+.agent-panel-info { flex: 1; }
+.agent-panel-name { font-size: 15px; font-weight: 600; }
+.agent-panel-model { font-size: 11px; color: var(--fg-muted); }
+.agent-panel-close { background: none; border: none; color: var(--fg-muted); font-size: 18px; cursor: pointer; padding: 4px; }
+.agent-panel-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.agent-panel-section-title { font-size: 10px; font-weight: 600; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+.agent-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.agent-stat { background: var(--bg-panel); border-radius: 6px; padding: 10px; text-align: center; }
+.agent-stat-value { font-size: 16px; font-weight: 700; }
+.agent-stat-label { font-size: 9px; color: var(--fg-muted); text-transform: uppercase; margin-top: 2px; }
+.agent-confidence-history { display: flex; align-items: flex-end; gap: 2px; height: 40px; margin-top: 8px; }
+.agent-confidence-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 4px; }
+.agent-recent-task {
+  padding: 8px 10px; background: var(--bg-panel); border-radius: 6px;
+  margin-bottom: 6px; font-size: 12px;
+}
+.agent-recent-task-title { color: var(--fg-primary); font-weight: 500; }
+.agent-recent-task-meta { color: var(--fg-muted); font-size: 10px; margin-top: 3px; }
 
 /* Command Palette */
 .palette-overlay {
@@ -742,7 +839,8 @@ body {
 .modal-overlay.active { opacity: 1; pointer-events: all; }
 .modal {
   background: var(--bg-panel); border: 1px solid var(--border);
-  border-radius: 12px; width: 520px; max-width: 90vw;
+  border-radius: 12px; width: 520px; max-width: 90vw; max-height: 85vh;
+  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.4);
   transform: translateY(10px); transition: transform 0.2s;
 }
@@ -773,6 +871,21 @@ body {
 .btn-primary { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
 .btn-primary:hover { background: #2563eb; }
 
+/* Shortcuts Overlay */
+.shortcuts-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1001; backdrop-filter: blur(4px);
+}
+.shortcuts-box {
+  width: 420px; background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.shortcuts-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.shortcuts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.shortcut-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: var(--bg-card); border-radius: 4px; font-size: 11px; }
+.shortcut-key { background: var(--bg-app); border: 1px solid var(--border); padding: 2px 6px; border-radius: 3px; font-family: var(--font-mono); font-size: 10px; }
+
 /* Toast */
 .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
 .toast {
@@ -800,11 +913,13 @@ body {
   .sidebar-item { justify-content: center; padding: 10px; }
   .terminal-panels { flex-direction: column; }
   .telemetry-bar { grid-template-columns: repeat(2, 1fr); }
+  .agent-panel { width: 100%; right: -100%; }
 }
 </style>
 </head>
-<body>
-<div style="position:fixed;z-index:99999;bottom:8px;left:8px;background:#3b2010;color:#ffd6a0;border:1px solid #f59e0b;border-radius:8px;padding:5px 10px;font:700 11px system-ui;pointer-events:none">STATIC DESIGN PREVIEW · DEMO DATA · NOT CONNECTED TO OPENMINDS API</div>
+<body><div style="position:fixed;z-index:2147483647;top:0;left:0;right:0;background:#6f2e12;color:#fff;text-align:center;font:700 12px system-ui;padding:5px">STATIC DESIGN PREVIEW · DEMO DATA · NOT CONNECTED TO OPENMINDS API</div>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
 <div class="app-window">
   <!-- Title Bar -->
@@ -853,6 +968,8 @@ body {
         <button class="view-tab" data-view="voice" onclick="switchView('voice')" role="tab">Voice</button>
         <button class="view-tab" data-view="mobile" onclick="switchView('mobile')" role="tab">Mobile</button>
         <button class="view-tab" data-view="workflows" onclick="switchView('workflows')" role="tab">Workflows</button>
+        <button class="view-tab" data-view="cost" onclick="switchView('cost')" role="tab">Cost</button>
+        <button class="view-tab" data-view="audit" onclick="switchView('audit')" role="tab">Audit</button>
       </div>
       <div class="status-indicator">
         <div class="status-dot-live" aria-hidden="true"></div>
@@ -860,6 +977,12 @@ body {
       </div>
     </div>
     <div class="control-bar-right">
+      <div class="presence-stack" title="3 operators online">
+        <div class="presence-avatar" style="background:#22c55e30;border-color:#22c55e;color:#22c55e;">F</div>
+        <div class="presence-avatar" style="background:#3b82f630;border-color:#3b82f6;color:#3b82f6;">A</div>
+        <div class="presence-avatar" style="background:#a855f730;border-color:#a855f7;color:#a855f7;">N</div>
+        <span class="presence-label">3 online</span>
+      </div>
       <div class="agents-badge" onclick="showToast('5 agents + OpenHuman sidecar active', 'info')" role="button" aria-label="5 agents working">
         <div class="agent-avatars" aria-hidden="true">
           <div class="agent-avatar-mini avatar-codex">C</div>
@@ -885,16 +1008,19 @@ body {
     <div class="left-sidebar">
       <div class="sidebar-nav">
         <div class="sidebar-item active" onclick="switchView('dashboard')" role="button" tabindex="0">
-          <span class="sidebar-item-icon" aria-hidden="true">☰</span><span>Tasks</span>
+          <span class="sidebar-item-icon" aria-hidden="true">☰</span><span>Dashboard</span>
         </div>
-        <div class="sidebar-item" onclick="switchView('console')" role="button" tabindex="0">
-          <span class="sidebar-item-icon" aria-hidden="true"></span><span>Automations</span>
+        <div class="sidebar-item" onclick="switchView('board')" role="button" tabindex="0">
+          <span class="sidebar-item-icon" aria-hidden="true">📋</span><span>Board</span>
         </div>
         <div class="sidebar-item" onclick="switchView('runs')" role="button" tabindex="0">
           <span class="sidebar-item-icon" aria-hidden="true">▶</span><span>Runs</span>
         </div>
+        <div class="sidebar-item" onclick="switchView('console')" role="button" tabindex="0">
+          <span class="sidebar-item-icon" aria-hidden="true">⌘</span><span>Console</span>
+        </div>
         <div class="sidebar-item" onclick="switchView('fleet')" role="button" tabindex="0">
-          <span class="sidebar-item-icon" aria-hidden="true"></span><span>Fleet</span>
+          <span class="sidebar-item-icon" aria-hidden="true">⬡</span><span>Fleet</span>
         </div>
         <div class="sidebar-item" onclick="switchView('knowledge')" role="button" tabindex="0">
           <span class="sidebar-item-icon" aria-hidden="true">📚</span><span>Knowledge</span>
@@ -903,10 +1029,19 @@ body {
           <span class="sidebar-item-icon" aria-hidden="true">🎙</span><span>Voice</span>
         </div>
         <div class="sidebar-item" onclick="switchView('mobile')" role="button" tabindex="0">
-          <span class="sidebar-item-icon" aria-hidden="true"></span><span>Mobile</span>
+          <span class="sidebar-item-icon" aria-hidden="true">📱</span><span>Mobile</span>
         </div>
         <div class="sidebar-item" onclick="switchView('workflows')" role="button" tabindex="0">
-          <span class="sidebar-item-icon" aria-hidden="true"></span><span>Workflows</span>
+          <span class="sidebar-item-icon" aria-hidden="true">⚡</span><span>Workflows</span>
+        </div>
+        <div class="sidebar-item" onclick="switchView('cost')" role="button" tabindex="0">
+          <span class="sidebar-item-icon" aria-hidden="true">💰</span><span>Cost</span>
+        </div>
+        <div class="sidebar-item" onclick="switchView('audit')" role="button" tabindex="0">
+          <span class="sidebar-item-icon" aria-hidden="true">📜</span><span>Audit</span>
+        </div>
+        <div class="sidebar-item" onclick="openSettingsModal()" role="button" tabindex="0">
+          <span class="sidebar-item-icon" aria-hidden="true">⚙</span><span>Settings</span>
         </div>
       </div>
       <div class="sidebar-search" onclick="openPalette()" role="button" tabindex="0" aria-label="Search">
@@ -938,6 +1073,26 @@ body {
 
         <div class="sidebar-section-title">
           <span style="display:flex;align-items:center;gap:6px;">
+            <span style="color:var(--accent-blue);" aria-hidden="true">👥</span> Squads
+            <span style="background:var(--bg-panel);color:var(--fg-muted);font-size:9px;padding:1px 5px;border-radius:8px;">2</span>
+          </span>
+          <div class="actions"><span aria-label="Add squad">+</span></div>
+        </div>
+        <div class="workspace-group">
+          <div class="workspace-item" onclick="showToast('Squad: Core (4 agents, 2 humans)','info')">
+            <div class="ws-dot green" aria-hidden="true"></div>
+            <span class="ws-label">Core</span>
+            <span class="ws-tag">6 members</span>
+          </div>
+          <div class="workspace-item" onclick="showToast('Squad: Mobile (2 agents, 1 human)','info')">
+            <div class="ws-dot orange" aria-hidden="true"></div>
+            <span class="ws-label">Mobile</span>
+            <span class="ws-tag">3 members</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section-title">
+          <span style="display:flex;align-items:center;gap:6px;">
             <span style="color:var(--accent-orange);" aria-hidden="true">◉</span> In progress
             <span style="background:var(--bg-panel);color:var(--fg-muted);font-size:9px;padding:1px 5px;border-radius:8px;" id="taskCount">17</span>
           </span>
@@ -956,7 +1111,7 @@ body {
     </div>
 
     <!-- Center Content -->
-    <div class="center-content">
+    <div class="center-content" id="main-content">
 
       <!-- Dashboard View -->
       <div class="view-section active" id="view-dashboard">
@@ -999,9 +1154,47 @@ body {
               <div class="working-spinner" aria-hidden="true"></div>
               <span style="color:var(--accent-yellow);">Running</span>
               <span style="color:var(--fg-muted);">12,400 tok · $0.034</span>
+              <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="exportRunReport()">⬇ Export Report</button>
             </div>
           </div>
           <div id="stepLedger" class="step-ledger" role="list" aria-label="Run steps"></div>
+          <div id="diffViewer" style="display:none;">
+            <div class="diff-viewer">
+              <div class="diff-header">
+                <span class="diff-filename">src/webhook.ts</span>
+                <span class="diff-stats"><span class="add">+47</span> <span class="del">-12</span></span>
+              </div>
+              <div class="diff-body">
+                <div class="diff-line hunk">@@ -23,8 +23,14 @@ export function deliverWebhook(url: string, payload: any) {</div>
+                <div class="diff-line ctx">  const maxRetries = 3;</div>
+                <div class="diff-line del">-  const delay = 1000;</div>
+                <div class="diff-line add">+  // Exponential backoff with jitter (HIM-4)</div>
+                <div class="diff-line add">+  const baseDelay = 1000;</div>
+                <div class="diff-line add">+  const maxDelay = 30000;</div>
+                <div class="diff-line add">+  const jitter = () => Math.random() * 0.3;</div>
+                <div class="diff-line ctx">  </div>
+                <div class="diff-line ctx">  for (let attempt = 0; attempt &lt; maxRetries; attempt++) {</div>
+                <div class="diff-line del">-    try {</div>
+                <div class="diff-line del">-      await fetch(url, { method: 'POST', body: JSON.stringify(payload) });</div>
+                <div class="diff-line del">-      return;</div>
+                <div class="diff-line del">-    } catch (e) {</div>
+                <div class="diff-line add">+    const delay = Math.min(baseDelay * Math.pow(2, attempt) * (1 + jitter()), maxDelay);</div>
+                <div class="diff-line add">+    try {</div>
+                <div class="diff-line add">+      const res = await fetch(url, { method: 'POST', body: JSON.stringify(payload), signal: AbortSignal.timeout(5000) });</div>
+                <div class="diff-line add">+      if (res.ok) return;</div>
+                <div class="diff-line add">+      throw new Error(`HTTP ${res.status}`);</div>
+                <div class="diff-line ctx">    } catch (e) {</div>
+                <div class="diff-line add">+      if (attempt &lt; maxRetries - 1) await sleep(delay);</div>
+                <div class="diff-line ctx">    }</div>
+                <div class="diff-line ctx">  }</div>
+              </div>
+              <div class="diff-actions">
+                <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="showToast('Diff copied','info')">Copy</button>
+                <button class="btn" style="font-size:11px;padding:4px 10px;color:var(--accent-red);border-color:var(--accent-red);" onclick="showToast('Changes rejected','warning')">Reject</button>
+                <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="showToast('Changes approved & committed','success')">✓ Approve & Commit</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1011,7 +1204,7 @@ body {
           <div class="terminal-panel">
             <div class="terminal-body">
               <div class="claude-logo">
-                <div class="claude-logo-icon" aria-hidden="true">🤖</div>
+                <div class="claude-logo-icon" aria-hidden="true"></div>
                 <div>
                   <div class="claude-logo-text">Claude Code v2.1.174</div>
                   <div class="claude-logo-sub">Fable 5 · Claude Max</div>
@@ -1093,13 +1286,17 @@ body {
         </div>
         <div class="status-bar">
           <div class="status-bar-left">
-            <div class="status-item"><span style="color:var(--accent-orange);" aria-hidden="true">✦</span><span>Fable 5 1M</span></div>
-            <div class="status-item"><span></span><span>improve-readme</span></div>
-            <div class="status-item"><span style="color:var(--accent-blue);" aria-hidden="true"></span><span>main/improve-readme</span><span class="status-dot-sm green" aria-hidden="true" style="margin-left:4px;"></span></div>
-            <div class="status-item" style="color:var(--accent-red);">▶▶ bypass permissions on (shift+tab to cycle)</div>
+            <div class="status-item"><span style="color:var(--accent-green);" aria-hidden="true">●</span><span>Postgres</span></div>
+            <div class="status-item"><span style="color:var(--accent-green);" aria-hidden="true">●</span><span>Redis</span></div>
+            <div class="status-item"><span style="color:var(--accent-green);" aria-hidden="true">●</span><span>OpenHuman</span></div>
+            <div class="status-item"><span style="color:var(--accent-green);" aria-hidden="true">●</span><span>Andee</span></div>
+            <div class="status-item"><span style="color:var(--accent-orange);" aria-hidden="true">◌</span><span>Ollama</span></div>
+            <div class="status-item"><span style="color:var(--accent-green);" aria-hidden="true">●</span><span>CDP Browser</span></div>
           </div>
           <div class="status-bar-right">
-            <div><span>● high</span><span style="margin-left:6px;">· /effort</span></div>
+            <div class="status-item" onclick="document.getElementById('shortcutsOverlay').style.display='flex'"><span>⌨</span><span>Shortcuts</span></div>
+            <div class="status-item"><span>⌘K</span><span>Palette</span></div>
+            <div class="status-item"><span>v2.0.0</span></div>
           </div>
         </div>
       </div>
@@ -1155,7 +1352,7 @@ body {
           <div class="voice-controls">
             <button class="voice-btn primary" id="voiceStartBtn" onclick="toggleVoiceSession()">● Start Session</button>
             <button class="voice-btn danger" id="voiceInterruptBtn" onclick="interruptVoice()" style="display:none;">⏸ Interrupt</button>
-            <button class="voice-btn" onclick="showToast('Voice settings opened', 'info')">⚙ Settings</button>
+            <button class="voice-btn" onclick="showToast('Voice settings opened', 'info')"> Settings</button>
           </div>
           <div class="voice-transcript">
             <div class="voice-transcript-title">Session Transcript</div>
@@ -1169,7 +1366,7 @@ body {
         </div>
       </div>
 
-      <!-- Mobile View (Andee) -->
+      <!-- Mobile View -->
       <div class="view-section" id="view-mobile">
         <div class="mobile-view">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -1194,7 +1391,7 @@ body {
                 <div class="mobile-phone-screen" id="mobilePhoneScreen">
                   <div class="mobile-status-bar-top">
                     <span>3:53</span>
-                    <span>🔕  📡 44%</span>
+                    <span>🔕   44%</span>
                   </div>
                   <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--fg-muted);font-size:12px;text-align:center;">
                     <div>
@@ -1230,6 +1427,82 @@ body {
         </div>
       </div>
 
+      <!-- Cost View -->
+      <div class="view-section" id="view-cost">
+        <div class="cost-view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:14px;font-weight:600;">Cost & Budget</div>
+              <div style="font-size:11px;color:var(--fg-muted);margin-top:2px;">Per-agent · Per-pipeline · Daily · OpenHuman: $0.0077/task</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="costRange" style="background:var(--bg-panel);border:1px solid var(--border);color:var(--fg-primary);padding:4px 8px;border-radius:4px;font-size:11px;">
+                <option>Today</option><option>7 days</option><option>30 days</option>
+              </select>
+              <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="exportCostReport()">⬇ Export CSV</button>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:12px;color:var(--fg-secondary);">Monthly Budget</span>
+              <span style="font-size:12px;color:var(--fg-primary);">$42.18 / $100.00</span>
+            </div>
+            <div style="height:6px;background:var(--bg-app);border-radius:3px;overflow:hidden;">
+              <div style="width:42%;height:100%;background:linear-gradient(90deg,var(--accent-green),var(--accent-yellow));border-radius:3px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--fg-muted);">
+              <span>42% used</span><span>Est. month-end: $168 (over budget)</span>
+            </div>
+          </div>
+
+          <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:8px;">By Agent</div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;">
+            <table class="cost-table">
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th style="text-align:right;">Tasks</th>
+                  <th style="text-align:right;">Tokens</th>
+                  <th style="text-align:right;">Cost</th>
+                  <th style="text-align:right;">Avg/Task</th>
+                  <th style="text-align:right;">Trend</th>
+                </tr>
+              </thead>
+              <tbody id="costAgentTable"></tbody>
+            </table>
+          </div>
+
+          <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:8px;">By Pipeline</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;" id="costPipelineGrid"></div>
+
+          <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:8px;margin-top:16px;">Last 14 Days</div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;">
+            <div id="costSparkline" class="cost-sparkline"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:var(--fg-muted);">
+              <span>Oct 11</span><span>Oct 14</span><span>Oct 17</span><span>Oct 20</span><span>Oct 24</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit View -->
+      <div class="view-section" id="view-audit">
+        <div class="audit-view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:14px;font-weight:600;">Audit Log</div>
+              <div style="font-size:11px;color:var(--fg-muted);margin-top:2px;">Immutable evidence trail · Append-only · "Systems that prove what happened"</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <input id="auditFilter" placeholder="Filter: user, action, tool..." style="background:var(--bg-panel);border:1px solid var(--border);color:var(--fg-primary);padding:4px 10px;border-radius:4px;font-size:11px;width:200px;" oninput="filterAudit()" />
+              <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="exportAuditLog()">⬇ Export</button>
+            </div>
+          </div>
+          <div id="auditLog" style="display:flex;flex-direction:column;gap:2px;"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1241,7 +1514,7 @@ body {
     <div class="palette-results" id="paletteResults" role="listbox"></div>
     <div class="palette-hint">
       <span><kbd>↑↓</kbd> navigate</span>
-      <span><kbd></kbd> select</span>
+      <span><kbd>↵</kbd> select</span>
       <span><kbd>esc</kbd> close</span>
     </div>
   </div>
@@ -1313,6 +1586,197 @@ body {
     <div class="modal-actions">
       <button class="btn" onclick="closeIngestModal()">Cancel</button>
       <button class="btn btn-primary" onclick="ingestDocument()">Ingest</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettingsModal()" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="modal" style="width:640px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-header">
+      <h3>⚙ Settings & Model Router</h3>
+      <button class="modal-close" onclick="closeSettingsModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:24px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:10px;">Model Routing (26 providers)</div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+          <table class="cost-table">
+            <thead>
+              <tr style="background:var(--bg-panel);">
+                <th>Task Type</th>
+                <th>Primary</th>
+                <th>Fallback</th>
+                <th>Local</th>
+                <th style="text-align:right;">$/1K tok</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="font-weight:500;">Coding</td><td style="color:var(--accent-blue);">gpt-5.5</td><td style="color:var(--fg-secondary);">claude-sonnet-4</td><td style="color:var(--fg-muted);">llama-3.3-70b</td><td style="text-align:right;">$3.50</td></tr>
+              <tr><td style="font-weight:500;">Research</td><td style="color:var(--accent-blue);">claude-sonnet-4</td><td style="color:var(--fg-secondary);">gpt-5.5</td><td style="color:var(--fg-muted);">mistral-8x7b</td><td style="text-align:right;">$3.00</td></tr>
+              <tr><td style="font-weight:500;">Summarize</td><td style="color:var(--accent-blue);">gpt-5.5-mini</td><td style="color:var(--fg-secondary);">claude-haiku</td><td style="color:var(--fg-muted);">llama-3.1-8b</td><td style="text-align:right;">$0.25</td></tr>
+              <tr><td style="font-weight:500;">Voice STT</td><td style="color:var(--accent-blue);">whisper-large-v3</td><td style="color:var(--fg-secondary);">whisper-medium</td><td style="color:var(--accent-green);">local (free)</td><td style="text-align:right;">$0.00</td></tr>
+              <tr><td style="font-weight:500;">Embeddings</td><td style="color:var(--accent-blue);">text-embedding-3</td><td style="color:var(--fg-secondary);">nomic-embed</td><td style="color:var(--accent-green);">local (free)</td><td style="text-align:right;">$0.02</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:10px;">Budget Caps</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="modal-field" style="margin:0;">
+            <label>Daily Cap ($)</label>
+            <input type="number" value="15" />
+          </div>
+          <div class="modal-field" style="margin:0;">
+            <label>Monthly Cap ($)</label>
+            <input type="number" value="100" />
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:10px;">Circuit Breaker</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="modal-field" style="margin:0;">
+            <label>Failure Threshold</label>
+            <input type="number" value="3" />
+          </div>
+          <div class="modal-field" style="margin:0;">
+            <label>Cooldown (s)</label>
+            <input type="number" value="60" />
+          </div>
+          <div class="modal-field" style="margin:0;">
+            <label>Half-Open Probes</label>
+            <input type="number" value="1" />
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span>Alert Rules</span>
+          <button class="btn" style="font-size:10px;padding:3px 8px;" onclick="showToast('Add alert rule','info')">+ Add</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);"></span>
+            <span style="flex:1;font-size:12px;">Runner CPU &gt; 80% for 5min</span>
+            <span style="font-size:10px;color:var(--fg-muted);">→ Telegram + Slack</span>
+            <span style="font-size:10px;color:var(--accent-green);">active</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);"></span>
+            <span style="flex:1;font-size:12px;">Pipeline failure rate &gt; 20% (1h)</span>
+            <span style="font-size:10px;color:var(--fg-muted);">→ Email + PagerDuty</span>
+            <span style="font-size:10px;color:var(--accent-green);">active</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);"></span>
+            <span style="flex:1;font-size:12px;">Daily cost &gt; $15</span>
+            <span style="font-size:10px;color:var(--fg-muted);">→ Slack #cost-alerts</span>
+            <span style="font-size:10px;color:var(--accent-green);">active</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);opacity:0.5;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--fg-dim);"></span>
+            <span style="flex:1;font-size:12px;">Agent confidence &lt; 0.5 (3 consecutive)</span>
+            <span style="font-size:10px;color:var(--fg-muted);">→ Human review required</span>
+            <span style="font-size:10px;color:var(--fg-muted);">paused</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--fg-secondary);margin-bottom:10px;">MCP Tool Permissions</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);">
+            <span class="permission-badge exec">exec</span>
+            <span style="flex:1;font-size:12px;">security_scan</span>
+            <span style="font-size:10px;color:var(--accent-green);">✓ approved (24h)</span>
+            <button style="font-size:10px;color:var(--accent-red);background:none;border:1px solid var(--accent-red);border-radius:3px;padding:2px 6px;cursor:pointer;">Revoke</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);">
+            <span class="permission-badge write">write</span>
+            <span style="flex:1;font-size:12px;">fs.write</span>
+            <span style="font-size:10px;color:var(--accent-green);">✓ approved (7d)</span>
+            <button style="font-size:10px;color:var(--accent-red);background:none;border:1px solid var(--accent-red);border-radius:3px;padding:2px 6px;cursor:pointer;">Revoke</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);">
+            <span class="permission-badge read">read</span>
+            <span style="flex:1;font-size:12px;">fs.read</span>
+            <span style="font-size:10px;color:var(--fg-muted);">always allowed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeSettingsModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="closeSettingsModal();showToast('Settings saved','success')">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agent Panel -->
+<div class="agent-panel-overlay" id="agentPanelOverlay" onclick="closeAgentPanel()"></div>
+<div class="agent-panel" id="agentPanel" role="dialog" aria-label="Agent details">
+  <div class="agent-panel-header">
+    <div class="agent-panel-avatar" id="agentPanelAvatar">?</div>
+    <div class="agent-panel-info">
+      <div class="agent-panel-name" id="agentPanelName">Agent</div>
+      <div class="agent-panel-model" id="agentPanelModel">model</div>
+    </div>
+    <button class="agent-panel-close" onclick="closeAgentPanel()" aria-label="Close">✕</button>
+  </div>
+  <div class="agent-panel-section">
+    <div class="agent-panel-section-title">Current Task</div>
+    <div id="agentPanelCurrentTask" style="font-size:12px;color:var(--fg-primary);">—</div>
+  </div>
+  <div class="agent-panel-section">
+    <div class="agent-panel-section-title">Stats (7 days)</div>
+    <div class="agent-stat-grid" id="agentPanelStats"></div>
+  </div>
+  <div class="agent-panel-section">
+    <div class="agent-panel-section-title">Confidence History</div>
+    <div class="agent-confidence-history" id="agentPanelConfidence"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--fg-muted);">
+      <span>Mon</span><span>Wed</span><span>Fri</span><span>Today</span>
+    </div>
+  </div>
+  <div class="agent-panel-section">
+    <div class="agent-panel-section-title">Recent Tasks</div>
+    <div id="agentPanelRecent"></div>
+  </div>
+  <div class="agent-panel-section">
+    <div class="agent-panel-section-title">Personality (MBTI)</div>
+    <div id="agentPanelPersona" style="font-size:12px;color:var(--fg-secondary);">—</div>
+  </div>
+</div>
+
+<!-- Shortcuts Overlay -->
+<div class="shortcuts-overlay" id="shortcutsOverlay" style="display:none;" onclick="closeShortcuts()">
+  <div class="shortcuts-box" onclick="event.stopPropagation()">
+    <div class="shortcuts-title">Keyboard Shortcuts</div>
+    <div class="shortcuts-grid">
+      <div class="shortcut-item"><span>Command Palette</span><span class="shortcut-key">K</span></div>
+      <div class="shortcut-item"><span>New Issue</span><span class="shortcut-key">C</span></div>
+      <div class="shortcut-item"><span>Stop All</span><span class="shortcut-key">⌘.</span></div>
+      <div class="shortcut-item"><span>Close / Back</span><span class="shortcut-key">Esc</span></div>
+      <div class="shortcut-item"><span>Go to Dashboard</span><span class="shortcut-key">G D</span></div>
+      <div class="shortcut-item"><span>Go to Board</span><span class="shortcut-key">G B</span></div>
+      <div class="shortcut-item"><span>Go to Runs</span><span class="shortcut-key">G R</span></div>
+      <div class="shortcut-item"><span>Go to Fleet</span><span class="shortcut-key">G F</span></div>
+      <div class="shortcut-item"><span>Go to Knowledge</span><span class="shortcut-key">G K</span></div>
+      <div class="shortcut-item"><span>Go to Voice</span><span class="shortcut-key">G V</span></div>
+      <div class="shortcut-item"><span>Go to Mobile</span><span class="shortcut-key">G M</span></div>
+      <div class="shortcut-item"><span>Go to Workflows</span><span class="shortcut-key">G W</span></div>
+      <div class="shortcut-item"><span>Go to Cost</span><span class="shortcut-key">G $</span></div>
+      <div class="shortcut-item"><span>Go to Audit</span><span class="shortcut-key">G A</span></div>
+      <div class="shortcut-item"><span>Settings</span><span class="shortcut-key">,</span></div>
+      <div class="shortcut-item"><span>This help</span><span class="shortcut-key">?</span></div>
+    </div>
+    <div style="margin-top:16px;text-align:center;">
+      <button class="btn" onclick="closeShortcuts()">Close</button>
     </div>
   </div>
 </div>
@@ -1395,7 +1859,10 @@ let events = [
 
 let telemetry = {
   active_runners: 4, trajectories_recorded: 1247,
-  issues_open: 7, jobs_active: 5, circuit_breaker: 'closed'
+  issues_open: 7, jobs_active: 5, circuit_breaker: 'closed',
+  openhuman_status: 'connected', andee_devices: 1,
+  knowledge_docs: 5, voice_sessions_today: 3,
+  workflows_active: 3, daily_cost: 4.42, monthly_cost: 42.18,
 };
 
 let runners = [
@@ -1422,7 +1889,6 @@ let tasks = [
   { title: '[Feature]: Control multiple Orca servers concurr…', branch: 'Jinwoo-H/feature-control-mul…', time: '' },
 ];
 
-// Knowledge Base
 let knowledgeDocs = [
   { id: 'doc-1', title: 'JWT Authentication Guide', source: 'https://docs.openminds.io/auth', content: 'OpenMinds uses JWT tokens for multi-user isolation. Tokens are issued via /auth/login with a 24h expiry. Refresh tokens are rotated on each use.', created: '2h ago' },
   { id: 'doc-2', title: 'RAG Knowledge Base Setup', source: 'https://docs.openminds.io/rag', content: 'Documents are chunked at 750 chars, embedded with local models, and stored with cosine similarity retrieval. Squad isolation is supported.', created: '5h ago' },
@@ -1431,17 +1897,14 @@ let knowledgeDocs = [
   { id: 'doc-5', title: 'Durable Workflows', source: 'https://docs.openminds.io/workflows', content: 'Workflows support manual, cron, and event triggers. Approval gates pause execution until human review. Runs are checkpoint-based and resumable.', created: '3d ago' },
 ];
 
-// Voice
 let voiceSession = { active: false, id: null, transcript: [] };
 
-// Mobile Devices
 let mobileDevices = [
   { id: 'dev-1', name: 'Pixel 8 Pro', ws_url: 'ws://192.168.1.50:9443', status: 'online', battery: 78, last_seen: 'just now' },
   { id: 'dev-2', name: 'iPhone 15', ws_url: 'ws://192.168.1.51:9443', status: 'offline', battery: 42, last_seen: '2h ago' },
 ];
 let selectedDevice = null;
 
-// Workflows
 let workflows = [
   { id: 'wf-1', name: 'Daily Code Review', trigger: 'cron', trigger_config: '0 9 * * *', steps: ['fetch_prs', 'analyze', 'comment', {type:'approval', label:'Human Review'}], runs: [
     { id: 'run-1', status: 'completed', time: '9:00 AM' },
@@ -1455,6 +1918,56 @@ let workflows = [
   ]},
 ];
 
+let costData = {
+  agents: [
+    { name: 'Codex', tasks: 47, tokens: 128400, cost: 8.92, avg: 0.19, trend: '+12%' },
+    { name: 'Claude', tasks: 34, tokens: 98200, cost: 12.47, avg: 0.37, trend: '-5%' },
+    { name: 'OpenCode', tasks: 28, tokens: 67000, cost: 3.42, avg: 0.12, trend: '+8%' },
+    { name: 'Grok', tasks: 19, tokens: 45000, cost: 5.81, avg: 0.31, trend: '+22%' },
+    { name: 'OpenHuman', tasks: 112, tokens: 34000, cost: 0.86, avg: 0.0077, trend: '-3%' },
+  ],
+  pipelines: [
+    { name: 'code-review', runs: 23, cost: 4.21, avg: 0.18 },
+    { name: 'test-generation', runs: 15, cost: 3.87, avg: 0.26 },
+    { name: 'deploy', runs: 8, cost: 1.12, avg: 0.14 },
+    { name: 'incident-response', runs: 3, cost: 2.94, avg: 0.98 },
+  ],
+  daily: [2.1, 3.4, 1.8, 4.2, 3.1, 5.6, 4.8, 3.9, 6.2, 4.1, 3.7, 5.3, 4.4, 2.8]
+};
+
+let auditLog = [
+  { time: '14:32:01', actor: 'operator@openminds', action: 'approve', target: 'HIM-19', detail: 'Approved: Draft getting-started guide', ip: '192.168.1.5', tool: 'board.review' },
+  { time: '14:28:44', actor: 'agent:claude', action: 'execute', target: 'HIM-11', detail: 'Ran investigation: duplicate run claims (34 tool calls)', ip: 'runner-us-east-1a', tool: 'agent.run' },
+  { time: '14:25:12', actor: 'agent:codex', action: 'write', target: 'src/webhook.ts', detail: 'Modified: added exponential backoff (3 files, +47 -12)', ip: 'runner-us-east-2b', tool: 'fs.write' },
+  { time: '14:21:03', actor: 'system', action: 'circuit_breaker', target: 'inference:openai', detail: 'Opened: 3 consecutive 503s → fallback to local model', ip: 'control-plane', tool: 'circuit' },
+  { time: '14:18:55', actor: 'operator@openminds', action: 'mcp_approve', target: 'tool:security_scan', detail: 'Granted exec permission for 24h', ip: '192.168.1.5', tool: 'mcp.auth' },
+  { time: '14:15:22', actor: 'agent:openhuman', action: 'memory_recall', target: 'query:JWT auth', detail: 'Recalled 3 chunks (sim: 0.91, 0.84, 0.72)', ip: 'openhuman:9444', tool: 'memory' },
+  { time: '14:12:08', actor: 'system', action: 'runner_heartbeat', target: 'runner-ap-south-1a', detail: 'Missed 3 heartbeats → marked idle', ip: 'control-plane', tool: 'fleet' },
+  { time: '14:08:33', actor: 'agent:grok', action: 'execute', target: 'HIM-20', detail: 'Traced token discrepancy: found off-by-1 in counter', ip: 'runner-eu-west-1a', tool: 'agent.run' },
+  { time: '14:02:17', actor: 'operator@openminds', action: 'kill_switch', target: 'ALL JOBS', detail: 'Stopped 5 running jobs (emergency)', ip: '192.168.1.5', tool: 'fleet.kill' },
+  { time: '13:58:44', actor: 'system', action: 'pipeline_complete', target: 'test-generation', detail: '23 tests generated, 0 failures', ip: 'control-plane', tool: 'pipeline' },
+  { time: '13:45:02', actor: 'agent:kimi', action: 'write', target: 'docs/fr/onboarding.md', detail: 'Created: French translation (1,247 words)', ip: 'runner-us-east-1a', tool: 'fs.write' },
+  { time: '13:30:19', actor: 'system', action: 'backup', target: 'postgresql', detail: 'pg_dump → Appwrite (247MB, 12s)', ip: 'control-plane', tool: 'backup' },
+];
+
+const AGENT_DETAILS = {
+  'Codex': { model: 'gpt-5.5 medium', mbti: 'ISTJ', persona: 'Methodical. Follows specs precisely. Low creativity, high reliability.', currentTask: 'HIM-4: Add retry backoff to webhook delivery', stats: { tasks: 47, success: '94%', avgConf: 0.89, cost: '$8.92' }, confidence: [0.85, 0.92, 0.88, 0.91, 0.87, 0.93, 0.89], recent: [
+    { title: 'Add retry backoff to webhook delivery', meta: 'In progress · 12 min' },
+    { title: 'Generate OpenAPI spec from routes', meta: 'Completed · 8 min · conf 0.92' },
+    { title: 'Fix rate limiter edge case', meta: 'Completed · 4 min · conf 0.88' },
+  ]},
+  'Claude': { model: 'claude-sonnet-4-20250514', mbti: 'INFJ', persona: 'Thoughtful. Asks clarifying questions. High empathy in code review.', currentTask: 'HIM-11: Investigate duplicate run claims', stats: { tasks: 34, success: '97%', avgConf: 0.92, cost: '$12.47' }, confidence: [0.91, 0.94, 0.89, 0.95, 0.93, 0.91, 0.94], recent: [
+    { title: 'Investigate duplicate run claims', meta: 'In progress · 23 min' },
+    { title: 'Write integration tests for trigger path', meta: 'Completed · 15 min · conf 0.95' },
+    { title: 'Draft getting-started guide', meta: 'In review · conf 0.91' },
+  ]},
+  'OpenHuman': { model: 'local (whisper + piper)', mbti: 'ISFP', persona: 'Quiet. Local-first. Minimal token usage. $0.0077/task.', currentTask: 'Memory recall: "JWT auth config"', stats: { tasks: 112, success: '99%', avgConf: 0.84, cost: '$0.86' }, confidence: [0.82, 0.85, 0.83, 0.86, 0.84, 0.85, 0.87], recent: [
+    { title: 'Memory recall: JWT auth', meta: 'Completed · 0.3s' },
+    { title: 'Voice transcription: fleet status', meta: 'Completed · 1.2s' },
+    { title: 'Search: "ComfyUI API"', meta: 'Completed · 0.8s' },
+  ]},
+};
+
 const COMMANDS = [
   { id: 'new-issue', label: 'Create new issue', icon: '+', action: () => openNewIssueModal(), keywords: ['issue','create','new','add','task'] },
   { id: 'view-dashboard', label: 'Go to Dashboard', icon: '◫', action: () => switchView('dashboard'), keywords: ['dashboard','board','home'] },
@@ -1462,25 +1975,35 @@ const COMMANDS = [
   { id: 'view-runs', label: 'Go to Runs (Step Ledger)', icon: '▶', action: () => switchView('runs'), keywords: ['runs','jobs','execution','ledger','steps'] },
   { id: 'view-console', label: 'Go to Console', icon: '⌘', action: () => switchView('console'), keywords: ['console','terminal','claude','codex'] },
   { id: 'view-fleet', label: 'Go to Fleet', icon: '⬡', action: () => switchView('fleet'), keywords: ['fleet','runners','nodes'] },
-  { id: 'view-pipelines', label: 'Go to Pipelines', icon: '⊞', action: () => switchView('pipelines'), keywords: ['pipelines','dag','workflow'] },
+  { id: 'view-pipelines', label: 'Go to Pipelines', icon: '', action: () => switchView('pipelines'), keywords: ['pipelines','dag','workflow'] },
   { id: 'view-knowledge', label: 'Go to Knowledge Base', icon: '📚', action: () => switchView('knowledge'), keywords: ['knowledge','rag','documents','search'] },
   { id: 'view-voice', label: 'Go to Voice Agent', icon: '🎙', action: () => switchView('voice'), keywords: ['voice','stt','tts','speech','whisper'] },
-  { id: 'view-mobile', label: 'Go to Mobile (Andee)', icon: '📱', action: () => switchView('mobile'), keywords: ['mobile','andee','phone','android','device'] },
+  { id: 'view-mobile', label: 'Go to Mobile (Andee)', icon: '', action: () => switchView('mobile'), keywords: ['mobile','andee','phone','android','device'] },
   { id: 'view-workflows', label: 'Go to Workflows', icon: '⚡', action: () => switchView('workflows'), keywords: ['workflows','cron','durable','approval'] },
+  { id: 'view-cost', label: 'Go to Cost & Budget', icon: '💰', action: () => switchView('cost'), keywords: ['cost','budget','spend','tokens','billing'] },
+  { id: 'view-audit', label: 'Go to Audit Log', icon: '📜', action: () => switchView('audit'), keywords: ['audit','log','evidence','trail','history','proof'] },
   { id: 'stop-all', label: '⚠ Stop all running jobs', icon: '■', action: () => handleKillSwitch(), keywords: ['stop','kill','halt','cancel','emergency'] },
   { id: 'filter-agents', label: 'Filter: Agents only', icon: '', action: () => { setFilter('agents'); switchView('board'); }, keywords: ['filter','agents'] },
   { id: 'filter-members', label: 'Filter: Members only', icon: '', action: () => { setFilter('members'); switchView('board'); }, keywords: ['filter','members','human'] },
   { id: 'ingest-doc', label: 'Ingest document into KB', icon: '📄', action: () => openIngestModal(), keywords: ['ingest','document','knowledge','upload'] },
   { id: 'start-voice', label: 'Start voice session', icon: '🎙', action: () => { switchView('voice'); if (!voiceSession.active) toggleVoiceSession(); }, keywords: ['voice','start','session','speak'] },
+  { id: 'settings', label: '⚙ Settings & Model Router', icon: '⚙', action: () => openSettingsModal(), keywords: ['settings','config','model','router','provider','budget','circuit'] },
+  { id: 'export-run', label: '⬇ Export run report', icon: '📄', action: () => exportRunReport(), keywords: ['export','report','run','download','share'] },
+  { id: 'export-audit', label: '⬇ Export audit log', icon: '📜', action: () => exportAuditLog(), keywords: ['export','audit','log','csv','download'] },
+  { id: 'shortcuts', label: 'Keyboard shortcuts', icon: '⌨', action: () => { document.getElementById('shortcutsOverlay').style.display = 'flex'; }, keywords: ['shortcuts','keys','help','bindings','hotkeys'] },
+  { id: 'agent-codex', label: 'View agent: Codex', icon: 'C', action: () => openAgentPanel('Codex'), keywords: ['codex','agent','view','details'] },
+  { id: 'agent-claude', label: 'View agent: Claude', icon: 'Cl', action: () => openAgentPanel('Claude'), keywords: ['claude','agent','view','details'] },
+  { id: 'agent-openhuman', label: 'View agent: OpenHuman', icon: 'OH', action: () => openAgentPanel('OpenHuman'), keywords: ['openhuman','agent','view','details','sidecar'] },
 ];
 
 let currentFilter = 'all';
 let paletteOpen = false, paletteSelected = 0, filteredCommands = [...COMMANDS];
 let killArmed = false, killTimer = null;
+let lastKey = '';
 
 // ═══════════════════════════════════════════════════════════
 // RENDERING
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 function renderTelemetry() {
   const t = telemetry;
   const cards = [
@@ -1489,6 +2012,7 @@ function renderTelemetry() {
     { label: 'Active Jobs', value: t.jobs_active, color: t.jobs_active > 0 ? '#3b82f6' : '#64748b' },
     { label: 'Trajectories', value: t.trajectories_recorded.toLocaleString(), color: '#a855f7' },
     { label: 'Circuit', value: t.circuit_breaker, color: t.circuit_breaker === 'closed' ? '#22c55e' : '#ef4444' },
+    { label: 'Cost Today', value: `$${t.daily_cost.toFixed(2)}`, color: t.daily_cost > 15 ? '#ef4444' : '#22c55e' },
   ];
   document.getElementById('telemetryBar').innerHTML = cards.map(c => `
     <div class="telemetry-card">
@@ -1515,7 +2039,7 @@ function renderCard(issue) {
       <div class="issue-title">${issue.title}</div>
       <div class="issue-footer">
         <div class="issue-assignee">
-          <div class="assignee-avatar ${avatar.cls}" aria-hidden="true">${avatar.initials}</div>
+          <div class="assignee-avatar ${avatar.cls}" style="cursor:pointer;" onclick="event.stopPropagation();openAgentPanel('${issue.assignee}')" aria-label="View ${issue.assignee} details">${avatar.initials}</div>
           <span class="assignee-name">${issue.assignee}</span>
         </div>
         <span class="issue-updated">Updated ${issue.updated}</span>
@@ -1608,6 +2132,12 @@ function renderStepLedger() {
   }
 
   container.innerHTML = topLevel.map((step, i) => renderStepRow(step, i === topLevel.length - 1)).join('');
+
+  const diffViewer = document.getElementById('diffViewer');
+  if (diffViewer) {
+    const hasCodeStep = runSteps.some(s => s.type === 'code_analyzer' || s.type === 'durable_code_agent');
+    diffViewer.style.display = hasCodeStep ? 'block' : 'none';
+  }
 }
 
 function renderActivityFeed() {
@@ -1694,7 +2224,6 @@ function renderPipelines() {
   `).join('');
 }
 
-// ── Knowledge ───
 function renderKnowledge() {
   const docsContainer = document.getElementById('knowledgeDocs');
   const countEl = document.getElementById('docCount');
@@ -1713,160 +2242,67 @@ function renderKnowledge() {
   if (countEl) countEl.textContent = `(${knowledgeDocs.length})`;
 }
 
-function queryKnowledge() {
-  const query = document.getElementById('knowledgeQuery').value.trim();
-  if (!query) { showToast('Enter a query', 'warning'); return; }
-  
-  const resultsContainer = document.getElementById('knowledgeResults');
-  resultsContainer.innerHTML = '<div style="color:var(--fg-muted);font-size:12px;padding:12px;">Searching knowledge base...</div>';
-  
-  setTimeout(() => {
-    const results = knowledgeDocs.map(d => ({
-      ...d,
-      similarity: 0.5 + Math.random() * 0.5,
-      snippet: d.content.slice(0, 120) + '...'
-    })).sort((a, b) => b.similarity - a.similarity).slice(0, 3);
-    
-    resultsContainer.innerHTML = results.map(r => {
-      const simColor = r.similarity >= 0.8 ? 'var(--accent-green)' : r.similarity >= 0.6 ? 'var(--accent-yellow)' : 'var(--accent-red)';
-      return `
-        <div class="knowledge-result">
-          <div class="knowledge-result-header">
-            <div class="knowledge-result-title">${r.title}</div>
-            <div class="knowledge-similarity">
-              <div class="similarity-bar"><div class="similarity-fill" style="width:${r.similarity*100}%;background:${simColor};"></div></div>
-              <span style="color:${simColor};font-weight:600;">${Math.round(r.similarity*100)}%</span>
-            </div>
-          </div>
-          <div class="knowledge-result-content">${r.snippet}</div>
-          <div class="knowledge-result-meta">Source: ${r.source} · Chunk 1/3</div>
-        </div>
-      `;
+function renderCost() {
+  const tbody = document.getElementById('costAgentTable');
+  if (tbody) {
+    tbody.innerHTML = costData.agents.map(a => `
+      <tr>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="assignee-avatar avatar-${a.name.toLowerCase()}" style="width:18px;height:18px;font-size:8px;cursor:pointer;" onclick="openAgentPanel('${a.name}')">${a.name[0]}</div>${a.name}</div></td>
+        <td style="text-align:right;">${a.tasks}</td>
+        <td style="text-align:right;color:var(--fg-muted);">${a.tokens.toLocaleString()}</td>
+        <td style="text-align:right;font-weight:600;">$${a.cost.toFixed(2)}</td>
+        <td style="text-align:right;color:var(--fg-muted);">$${a.avg.toFixed(4)}</td>
+        <td style="text-align:right;color:${a.trend.startsWith('+')?'var(--accent-red)':'var(--accent-green)'};">${a.trend}</td>
+      </tr>
+    `).join('');
+  }
+
+  const grid = document.getElementById('costPipelineGrid');
+  if (grid) {
+    grid.innerHTML = costData.pipelines.map(p => `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;">
+        <div style="font-size:12px;font-weight:600;margin-bottom:4px;">${p.name}</div>
+        <div style="font-size:11px;color:var(--fg-muted);">${p.runs} runs · $${p.avg.toFixed(2)}/run</div>
+        <div style="font-size:18px;font-weight:700;color:var(--accent-purple);margin-top:6px;">$${p.cost.toFixed(2)}</div>
+      </div>
+    `).join('');
+  }
+
+  const spark = document.getElementById('costSparkline');
+  if (spark) {
+    const max = Math.max(...costData.daily);
+    spark.innerHTML = costData.daily.map((v, i) => {
+      const h = (v / max) * 100;
+      const color = v > 5 ? 'var(--accent-red)' : v > 3 ? 'var(--accent-yellow)' : 'var(--accent-green)';
+      return `<div class="cost-sparkline-bar" style="height:${h}%;background:${color};" title="$${v.toFixed(2)}"></div>`;
     }).join('');
-    
-    addEvent(`Knowledge query: "${query}" — ${results.length} results`, 'info');
-  }, 600);
-}
-
-function openIngestModal() {
-  document.getElementById('ingestModal').classList.add('active');
-  setTimeout(() => document.getElementById('ingestTitle').focus(), 100);
-}
-function closeIngestModal() {
-  document.getElementById('ingestModal').classList.remove('active');
-  document.getElementById('ingestTitle').value = '';
-  document.getElementById('ingestSource').value = '';
-  document.getElementById('ingestContent').value = '';
-}
-function ingestDocument() {
-  const title = document.getElementById('ingestTitle').value.trim();
-  const source = document.getElementById('ingestSource').value.trim();
-  const content = document.getElementById('ingestContent').value.trim();
-  if (!title || !content) { showToast('Title and content required', 'warning'); return; }
-  
-  knowledgeDocs.unshift({
-    id: 'doc-' + (knowledgeDocs.length + 1),
-    title, source: source || 'local', content, created: 'just now'
-  });
-  closeIngestModal();
-  renderKnowledge();
-  addEvent(`Document ingested: "${title}"`, 'success');
-  showToast(`Ingested: ${title}`, 'success');
-}
-
-// ─── Voice ───
-function toggleVoiceSession() {
-  const orb = document.getElementById('voiceOrb');
-  const icon = document.getElementById('voiceOrbIcon');
-  const btn = document.getElementById('voiceStartBtn');
-  const interruptBtn = document.getElementById('voiceInterruptBtn');
-  const transcript = document.getElementById('voiceTranscript');
-  const sessionId = document.getElementById('voiceSessionId');
-  
-  if (!voiceSession.active) {
-    voiceSession.active = true;
-    voiceSession.id = 'vs-' + Math.random().toString(36).slice(2, 8);
-    voiceSession.transcript = [];
-    orb.classList.add('active');
-    icon.textContent = '';
-    btn.textContent = '● Listening...';
-    btn.classList.remove('primary');
-    interruptBtn.style.display = 'inline-block';
-    sessionId.textContent = voiceSession.id;
-    transcript.innerHTML = '<span style="color:var(--accent-green);">● Session started. Listening...</span>';
-    addEvent(`Voice session started: ${voiceSession.id}`, 'info');
-    showToast('Voice session started', 'success');
-    
-    // Simulate incoming speech
-    setTimeout(() => simulateVoiceInput('Hey, what\'s the status of the code review pipeline?'), 2000);
-  } else {
-    endVoiceSession();
   }
 }
 
-function simulateVoiceInput(text) {
-  if (!voiceSession.active) return;
-  const transcript = document.getElementById('voiceTranscript');
-  voiceSession.transcript.push({ role: 'user', text, time: new Date().toLocaleTimeString() });
+function renderAuditLog() {
+  const container = document.getElementById('auditLog');
+  if (!container) return;
+  const filter = (document.getElementById('auditFilter')?.value || '').toLowerCase();
+  const filtered = filter ? auditLog.filter(a => 
+    a.actor.toLowerCase().includes(filter) || 
+    a.action.toLowerCase().includes(filter) || 
+    a.target.toLowerCase().includes(filter) ||
+    a.detail.toLowerCase().includes(filter)
+  ) : auditLog;
   
-  const responses = [
-    'The code-review-pipeline is currently running. Security scan is in progress with 2 of 3 substeps complete.',
-    'I found 3 issues in the current sprint. 2 are in progress, 1 awaiting review.',
-    'All runners are healthy. CPU usage is nominal across the fleet.',
-    'The knowledge base has 5 documents. Most recent: JWT Authentication Guide.',
-  ];
-  const response = responses[Math.floor(Math.random() * responses.length)];
+  const actionColors = { approve: 'var(--accent-green)', execute: 'var(--accent-blue)', write: 'var(--accent-orange)', circuit_breaker: 'var(--accent-red)', mcp_approve: 'var(--accent-purple)', kill_switch: 'var(--accent-red)', memory_recall: 'var(--accent-cyan)', runner_heartbeat: 'var(--fg-muted)', pipeline_complete: 'var(--accent-green)', backup: 'var(--fg-muted)' };
   
-  setTimeout(() => {
-    if (!voiceSession.active) return;
-    voiceSession.transcript.push({ role: 'agent', text: response, time: new Date().toLocaleTimeString() });
-    renderVoiceTranscript();
-  }, 1500);
-  
-  renderVoiceTranscript();
-  
-  // Schedule next input
-  if (voiceSession.active) {
-    setTimeout(() => simulateVoiceInput(['Show me the fleet status', 'What workflows ran today?', 'Summarize recent activity'][Math.floor(Math.random()*3)]), 8000 + Math.random() * 5000);
-  }
-}
-
-function renderVoiceTranscript() {
-  const transcript = document.getElementById('voiceTranscript');
-  if (voiceSession.transcript.length === 0) return;
-  transcript.innerHTML = voiceSession.transcript.map(t => `
-    <div style="margin-bottom:8px;">
-      <span style="font-size:10px;color:var(--fg-muted);">${t.role === 'user' ? '👤 You' : '🤖 Agent'} · ${t.time}</span>
-      <div style="color:${t.role === 'user' ? 'var(--fg-primary)' : 'var(--accent-purple)'};margin-top:2px;">${t.text}</div>
+  container.innerHTML = filtered.map(a => `
+    <div class="audit-row">
+      <span style="color:var(--fg-dim);font-family:var(--font-mono);font-size:11px;white-space:nowrap;min-width:60px;">${a.time}</span>
+      <span style="font-weight:600;color:var(--fg-secondary);min-width:120px;">${a.actor}</span>
+      <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:${(actionColors[a.action]||'var(--fg-muted)')+'20'};color:${actionColors[a.action]||'var(--fg-muted)'};font-weight:600;white-space:nowrap;">${a.action}</span>
+      <span style="color:var(--fg-primary);flex:1;">${a.detail}</span>
+      <span style="color:var(--fg-dim);font-size:10px;white-space:nowrap;">${a.ip}</span>
     </div>
   `).join('');
 }
 
-function interruptVoice() {
-  if (!voiceSession.active) return;
-  voiceSession.transcript.push({ role: 'system', text: '[Interrupted by user]', time: new Date().toLocaleTimeString() });
-  renderVoiceTranscript();
-  addEvent('Voice session interrupted', 'warning');
-  showToast('Interrupted current response', 'warning');
-}
-
-function endVoiceSession() {
-  const orb = document.getElementById('voiceOrb');
-  const icon = document.getElementById('voiceOrbIcon');
-  const btn = document.getElementById('voiceStartBtn');
-  const interruptBtn = document.getElementById('voiceInterruptBtn');
-  
-  voiceSession.active = false;
-  orb.classList.remove('active');
-  icon.textContent = '🎙️';
-  btn.textContent = '● Start Session';
-  btn.classList.add('primary');
-  interruptBtn.style.display = 'none';
-  addEvent(`Voice session ended: ${voiceSession.id}`, 'info');
-  showToast('Voice session ended', 'info');
-}
-
-// ─── Mobile (Andee) ───
 function renderMobileDevices() {
   const container = document.getElementById('mobileDevices');
   if (!container) return;
@@ -1884,77 +2320,12 @@ function renderMobileDevices() {
         <button class="mobile-action-btn" onclick="event.stopPropagation();mobileAction('tap',{x:0.5,y:0.5})">Tap</button>
         <button class="mobile-action-btn" onclick="event.stopPropagation();mobileAction('type')">Type</button>
         <button class="mobile-action-btn" onclick="event.stopPropagation();mobileAction('scroll')">Scroll</button>
-        <button class="mobile-action-btn" onclick="event.stopPropagation();mobileAction('screenshot')"></button>
+        <button class="mobile-action-btn" onclick="event.stopPropagation();mobileAction('screenshot')">📸</button>
       </div>
     </div>
   `).join('');
 }
 
-function selectMobileDevice(id) {
-  selectedDevice = id;
-  const device = mobileDevices.find(d => d.id === id);
-  if (!device) return;
-  
-  document.getElementById('mobileScreenTitle').textContent = `Live: ${device.name}`;
-  renderMobileDevices();
-  
-  // Show phone screen with apps
-  const screen = document.getElementById('mobilePhoneScreen');
-  screen.innerHTML = `
-    <div class="mobile-status-bar-top">
-      <span>3:53</span>
-      <span>🔕  📡 ${device.battery}%</span>
-    </div>
-    <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;">
-      <div style="font-size:24px;font-weight:300;color:var(--fg-primary);margin-bottom:4px;">3:53</div>
-      <div style="font-size:11px;color:var(--fg-muted);">Thursday, Jan 16</div>
-    </div>
-    <div class="mobile-app-grid">
-      ${['📱','💬','📷','','🗺️','📧','️','🎮','','📝','🔍','🛒'].map((icon, i) => `
-        <div style="text-align:center;">
-          <div class="mobile-app-icon" style="background:hsl(${i*30},60%,30%);" onclick="mobileAction('tap',{x:${0.125 + (i%4)*0.25},y:${0.3 + Math.floor(i/4)*0.25}})">${icon}</div>
-          <div class="mobile-app-label">App ${i+1}</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-  
-  showToast(`Selected: ${device.name}`, 'info');
-}
-
-function mobileAction(action, params = {}) {
-  if (!selectedDevice) { showToast('Select a device first', 'warning'); return; }
-  const device = mobileDevices.find(d => d.id === selectedDevice);
-  addEvent(`Andee action: ${action} on ${device.name}`, 'info');
-  showToast(`${action} sent to ${device.name}`, 'success');
-}
-
-function captureScreenshot() {
-  if (!selectedDevice) { showToast('Select a device first', 'warning'); return; }
-  showToast('Screenshot captured', 'success');
-  addEvent('Screenshot captured from device', 'info');
-}
-
-function readScreen() {
-  if (!selectedDevice) { showToast('Select a device first', 'warning'); return; }
-  showToast('Screen read: 12 elements detected', 'success');
-}
-
-function registerDevice() {
-  const name = prompt('Device name:');
-  if (!name) return;
-  const ws = prompt('WebSocket URL:', 'ws://192.168.1.52:9443');
-  if (!ws) return;
-  mobileDevices.push({
-    id: 'dev-' + (mobileDevices.length + 1),
-    name, ws_url: ws, status: 'online', battery: 100, last_seen: 'just now'
-  });
-  renderMobileDevices();
-  addEvent(`Device registered: ${name}`, 'success');
-  showToast(`Registered: ${name}`, 'success');
-}
-
-// ─── Workflows ───
 function renderWorkflows() {
   const container = document.getElementById('workflowsList');
   if (!container) return;
@@ -1991,49 +2362,7 @@ function renderWorkflows() {
   `).join('');
 }
 
-function triggerWorkflow(wfId) {
-  const wf = workflows.find(w => w.id === wfId);
-  if (!wf) return;
-  const newRun = { id: 'run-' + Math.random().toString(36).slice(2, 6), status: 'running', time: 'just now' };
-  wf.runs.unshift(newRun);
-  renderWorkflows();
-  addEvent(`Workflow triggered: ${wf.name}`, 'info');
-  showToast(`Started: ${wf.name}`, 'success');
-  
-  setTimeout(() => {
-    newRun.status = 'completed';
-    renderWorkflows();
-    addEvent(`Workflow completed: ${wf.name}`, 'success');
-  }, 3000);
-}
-
-function approveWorkflowRun(wfId, runId) {
-  const wf = workflows.find(w => w.id === wfId);
-  if (!wf) return;
-  const run = wf.runs.find(r => r.id === runId);
-  if (run) {
-    run.status = 'completed';
-    renderWorkflows();
-    addEvent(`Workflow run approved: ${runId}`, 'success');
-    showToast(`Approved: ${runId}`, 'success');
-  }
-}
-
-function createWorkflow() {
-  const name = prompt('Workflow name:');
-  if (!name) return;
-  workflows.push({
-    id: 'wf-' + (workflows.length + 1),
-    name, trigger: 'manual', trigger_config: {},
-    steps: ['step_1', 'step_2', {type:'approval', label:'Human Review'}],
-    runs: []
-  });
-  renderWorkflows();
-  addEvent(`Workflow created: ${name}`, 'info');
-  showToast(`Created: ${name}`, 'success');
-}
-
-// ══════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════
 // ACTIONS
 // ══════════════════════════════════════════════════════════
 function switchView(view) {
@@ -2050,6 +2379,8 @@ function switchView(view) {
   if (view === 'knowledge') renderKnowledge();
   if (view === 'mobile') renderMobileDevices();
   if (view === 'workflows') renderWorkflows();
+  if (view === 'cost') renderCost();
+  if (view === 'audit') renderAuditLog();
 }
 
 function setFilter(filter) {
@@ -2157,6 +2488,221 @@ function createIssue() {
   showToast(`Created ${newId}: ${title}`, 'success');
 }
 
+function openIngestModal() {
+  document.getElementById('ingestModal').classList.add('active');
+  setTimeout(() => document.getElementById('ingestTitle').focus(), 100);
+}
+function closeIngestModal() {
+  document.getElementById('ingestModal').classList.remove('active');
+  document.getElementById('ingestTitle').value = '';
+  document.getElementById('ingestSource').value = '';
+  document.getElementById('ingestContent').value = '';
+}
+function ingestDocument() {
+  const title = document.getElementById('ingestTitle').value.trim();
+  const source = document.getElementById('ingestSource').value.trim();
+  const content = document.getElementById('ingestContent').value.trim();
+  if (!title || !content) { showToast('Title and content required', 'warning'); return; }
+  knowledgeDocs.unshift({ id: 'doc-' + (knowledgeDocs.length + 1), title, source: source || 'local', content, created: 'just now' });
+  closeIngestModal();
+  renderKnowledge();
+  addEvent(`Document ingested: "${title}"`, 'success');
+  showToast(`Ingested: ${title}`, 'success');
+}
+
+function queryKnowledge() {
+  const query = document.getElementById('knowledgeQuery').value.trim();
+  if (!query) { showToast('Enter a query', 'warning'); return; }
+  const resultsContainer = document.getElementById('knowledgeResults');
+  resultsContainer.innerHTML = '<div style="color:var(--fg-muted);font-size:12px;padding:12px;">Searching knowledge base...</div>';
+  setTimeout(() => {
+    const results = knowledgeDocs.map(d => ({ ...d, similarity: 0.5 + Math.random() * 0.5, snippet: d.content.slice(0, 120) + '...' })).sort((a, b) => b.similarity - a.similarity).slice(0, 3);
+    resultsContainer.innerHTML = results.map(r => {
+      const simColor = r.similarity >= 0.8 ? 'var(--accent-green)' : r.similarity >= 0.6 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+      return `
+        <div class="knowledge-result">
+          <div class="knowledge-result-header">
+            <div class="knowledge-result-title">${r.title}</div>
+            <div class="knowledge-similarity">
+              <div class="similarity-bar"><div class="similarity-fill" style="width:${r.similarity*100}%;background:${simColor};"></div></div>
+              <span style="color:${simColor};font-weight:600;">${Math.round(r.similarity*100)}%</span>
+            </div>
+          </div>
+          <div class="knowledge-result-content">${r.snippet}</div>
+          <div class="knowledge-result-meta">Source: ${r.source} · Chunk 1/3</div>
+        </div>
+      `;
+    }).join('');
+    addEvent(`Knowledge query: "${query}" — ${results.length} results`, 'info');
+  }, 600);
+}
+
+function toggleVoiceSession() {
+  const orb = document.getElementById('voiceOrb');
+  const icon = document.getElementById('voiceOrbIcon');
+  const btn = document.getElementById('voiceStartBtn');
+  const interruptBtn = document.getElementById('voiceInterruptBtn');
+  const transcript = document.getElementById('voiceTranscript');
+  const sessionId = document.getElementById('voiceSessionId');
+  if (!voiceSession.active) {
+    voiceSession.active = true;
+    voiceSession.id = 'vs-' + Math.random().toString(36).slice(2, 8);
+    voiceSession.transcript = [];
+    orb.classList.add('active');
+    icon.textContent = '';
+    btn.textContent = '● Listening...';
+    btn.classList.remove('primary');
+    interruptBtn.style.display = 'inline-block';
+    sessionId.textContent = voiceSession.id;
+    transcript.innerHTML = '<span style="color:var(--accent-green);">● Session started. Listening...</span>';
+    addEvent(`Voice session started: ${voiceSession.id}`, 'info');
+    showToast('Voice session started', 'success');
+    setTimeout(() => simulateVoiceInput('Hey, what\'s the status of the code review pipeline?'), 2000);
+  } else {
+    endVoiceSession();
+  }
+}
+
+function simulateVoiceInput(text) {
+  if (!voiceSession.active) return;
+  const transcript = document.getElementById('voiceTranscript');
+  voiceSession.transcript.push({ role: 'user', text, time: new Date().toLocaleTimeString() });
+  const responses = [
+    'The code-review-pipeline is currently running. Security scan is in progress with 2 of 3 substeps complete.',
+    'I found 3 issues in the current sprint. 2 are in progress, 1 awaiting review.',
+    'All runners are healthy. CPU usage is nominal across the fleet.',
+    'The knowledge base has 5 documents. Most recent: JWT Authentication Guide.',
+  ];
+  const response = responses[Math.floor(Math.random() * responses.length)];
+  setTimeout(() => {
+    if (!voiceSession.active) return;
+    voiceSession.transcript.push({ role: 'agent', text: response, time: new Date().toLocaleTimeString() });
+    renderVoiceTranscript();
+  }, 1500);
+  renderVoiceTranscript();
+  if (voiceSession.active) {
+    setTimeout(() => simulateVoiceInput(['Show me the fleet status', 'What workflows ran today?', 'Summarize recent activity'][Math.floor(Math.random()*3)]), 8000 + Math.random() * 5000);
+  }
+}
+
+function renderVoiceTranscript() {
+  const transcript = document.getElementById('voiceTranscript');
+  if (voiceSession.transcript.length === 0) return;
+  transcript.innerHTML = voiceSession.transcript.map(t => `
+    <div style="margin-bottom:8px;">
+      <span style="font-size:10px;color:var(--fg-muted);">${t.role === 'user' ? '👤 You' : ' Agent'} · ${t.time}</span>
+      <div style="color:${t.role === 'user' ? 'var(--fg-primary)' : 'var(--accent-purple)'};margin-top:2px;">${t.text}</div>
+    </div>
+  `).join('');
+}
+
+function interruptVoice() {
+  if (!voiceSession.active) return;
+  voiceSession.transcript.push({ role: 'system', text: '[Interrupted by user]', time: new Date().toLocaleTimeString() });
+  renderVoiceTranscript();
+  addEvent('Voice session interrupted', 'warning');
+  showToast('Interrupted current response', 'warning');
+}
+
+function endVoiceSession() {
+  const orb = document.getElementById('voiceOrb');
+  const icon = document.getElementById('voiceOrbIcon');
+  const btn = document.getElementById('voiceStartBtn');
+  const interruptBtn = document.getElementById('voiceInterruptBtn');
+  voiceSession.active = false;
+  orb.classList.remove('active');
+  icon.textContent = '️';
+  btn.textContent = '● Start Session';
+  btn.classList.add('primary');
+  interruptBtn.style.display = 'none';
+  addEvent(`Voice session ended: ${voiceSession.id}`, 'info');
+  showToast('Voice session ended', 'info');
+}
+
+function selectMobileDevice(id) {
+  selectedDevice = id;
+  const device = mobileDevices.find(d => d.id === id);
+  if (!device) return;
+  document.getElementById('mobileScreenTitle').textContent = `Live: ${device.name}`;
+  renderMobileDevices();
+  const screen = document.getElementById('mobilePhoneScreen');
+  screen.innerHTML = `
+    <div class="mobile-status-bar-top">
+      <span>3:53</span>
+      <span>🔕  📡 ${device.battery}%</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;">
+      <div style="font-size:24px;font-weight:300;color:var(--fg-primary);margin-bottom:4px;">3:53</div>
+      <div style="font-size:11px;color:var(--fg-muted);">Thursday, Jan 16</div>
+    </div>
+    <div class="mobile-app-grid">
+      ${['📱','','📷','🗺️','','🎮','📝','','🛒','⚙️','📊','🎵'].map((icon, i) => `
+        <div style="text-align:center;">
+          <div class="mobile-app-icon" style="background:hsl(${i*30},60%,30%);" onclick="mobileAction('tap',{x:${0.125 + (i%4)*0.25},y:${0.3 + Math.floor(i/4)*0.25}})">${icon}</div>
+          <div class="mobile-app-label">App ${i+1}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  showToast(`Selected: ${device.name}`, 'info');
+}
+
+function mobileAction(action, params = {}) {
+  if (!selectedDevice) { showToast('Select a device first', 'warning'); return; }
+  const device = mobileDevices.find(d => d.id === selectedDevice);
+  addEvent(`Andee action: ${action} on ${device.name}`, 'info');
+  showToast(`${action} sent to ${device.name}`, 'success');
+}
+
+function captureScreenshot() {
+  if (!selectedDevice) { showToast('Select a device first', 'warning'); return; }
+  showToast('Screenshot captured', 'success');
+  addEvent('Screenshot captured from device', 'info');
+}
+
+function readScreen() {
+  if (!selectedDevice) { showToast('Select a device first', 'warning'); return; }
+  showToast('Screen read: 12 elements detected', 'success');
+}
+
+function registerDevice() {
+  const name = prompt('Device name:');
+  if (!name) return;
+  const ws = prompt('WebSocket URL:', 'ws://192.168.1.52:9443');
+  if (!ws) return;
+  mobileDevices.push({ id: 'dev-' + (mobileDevices.length + 1), name, ws_url: ws, status: 'online', battery: 100, last_seen: 'just now' });
+  renderMobileDevices();
+  addEvent(`Device registered: ${name}`, 'success');
+  showToast(`Registered: ${name}`, 'success');
+}
+
+function triggerWorkflow(wfId) {
+  const wf = workflows.find(w => w.id === wfId);
+  if (!wf) return;
+  const newRun = { id: 'run-' + Math.random().toString(36).slice(2, 6), status: 'running', time: 'just now' };
+  wf.runs.unshift(newRun);
+  renderWorkflows();
+  addEvent(`Workflow triggered: ${wf.name}`, 'info');
+  showToast(`Started: ${wf.name}`, 'success');
+  setTimeout(() => { newRun.status = 'completed'; renderWorkflows(); addEvent(`Workflow completed: ${wf.name}`, 'success'); }, 3000);
+}
+
+function approveWorkflowRun(wfId, runId) {
+  const wf = workflows.find(w => w.id === wfId);
+  if (!wf) return;
+  const run = wf.runs.find(r => r.id === runId);
+  if (run) { run.status = 'completed'; renderWorkflows(); addEvent(`Workflow run approved: ${runId}`, 'success'); showToast(`Approved: ${runId}`, 'success'); }
+}
+
+function createWorkflow() {
+  const name = prompt('Workflow name:');
+  if (!name) return;
+  workflows.push({ id: 'wf-' + (workflows.length + 1), name, trigger: 'manual', trigger_config: {}, steps: ['step_1', 'step_2', {type:'approval', label:'Human Review'}], runs: [] });
+  renderWorkflows();
+  addEvent(`Workflow created: ${name}`, 'info');
+  showToast(`Created: ${name}`, 'success');
+}
+
 function handleRunPipeline(pipelineId, pipelineName) {
   addEvent(`Pipeline started: ${pipelineName}`, 'info');
   showToast(`Pipeline started: ${pipelineName}`, 'success');
@@ -2181,7 +2727,7 @@ function handleKillSwitch() {
     renderBoard('dashboardBoard');
     renderBoard('fullBoard');
     renderTelemetry();
-    addEvent('⚠ All jobs stopped by operator', 'warning');
+    addEvent(' All jobs stopped by operator', 'warning');
     showToast('All running jobs have been stopped', 'error');
   }
 }
@@ -2201,6 +2747,88 @@ function selectTask(el) {
   document.querySelectorAll('.task-item').forEach(i => i.classList.remove('active'));
   el.classList.add('active');
 }
+
+// Agent Panel
+function openAgentPanel(agentName) {
+  const data = AGENT_DETAILS[agentName];
+  if (!data) { showToast(`No details for ${agentName}`, 'info'); return; }
+  document.getElementById('agentPanelName').textContent = agentName;
+  document.getElementById('agentPanelModel').textContent = data.model;
+  document.getElementById('agentPanelAvatar').textContent = agentName[0];
+  document.getElementById('agentPanelAvatar').className = `agent-panel-avatar avatar-${agentName.toLowerCase()}`;
+  document.getElementById('agentPanelCurrentTask').textContent = data.currentTask;
+  document.getElementById('agentPanelPersona').textContent = `${data.mbti} — ${data.persona}`;
+  document.getElementById('agentPanelStats').innerHTML = `
+    <div class="agent-stat"><div class="agent-stat-value">${data.stats.tasks}</div><div class="agent-stat-label">Tasks</div></div>
+    <div class="agent-stat"><div class="agent-stat-value" style="color:var(--accent-green)">${data.stats.success}</div><div class="agent-stat-label">Success</div></div>
+    <div class="agent-stat"><div class="agent-stat-value" style="color:var(--accent-purple)">${data.stats.avgConf}</div><div class="agent-stat-label">Avg Conf</div></div>
+    <div class="agent-stat"><div class="agent-stat-value" style="color:var(--accent-yellow)">${data.stats.cost}</div><div class="agent-stat-label">Cost (7d)</div></div>
+  `;
+  document.getElementById('agentPanelConfidence').innerHTML = data.confidence.map(c => {
+    const color = c >= 0.9 ? 'var(--accent-green)' : c >= 0.7 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+    return `<div class="agent-confidence-bar" style="height:${c*100}%;background:${color};" title="${c}"></div>`;
+  }).join('');
+  document.getElementById('agentPanelRecent').innerHTML = data.recent.map(r => `
+    <div class="agent-recent-task">
+      <div class="agent-recent-task-title">${r.title}</div>
+      <div class="agent-recent-task-meta">${r.meta}</div>
+    </div>
+  `).join('');
+  document.getElementById('agentPanelOverlay').classList.add('active');
+  document.getElementById('agentPanel').classList.add('active');
+}
+
+function closeAgentPanel() {
+  document.getElementById('agentPanelOverlay').classList.remove('active');
+  document.getElementById('agentPanel').classList.remove('active');
+}
+
+// Settings
+function openSettingsModal() { document.getElementById('settingsModal').classList.add('active'); }
+function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
+
+// Shortcuts
+function closeShortcuts() { document.getElementById('shortcutsOverlay').style.display = 'none'; }
+
+// Exports
+function exportCostReport() {
+  const csv = 'agent,tasks,tokens,cost,avg_per_task\n' + costData.agents.map(a => `${a.name},${a.tasks},${a.tokens},${a.cost},${a.avg}`).join('\n');
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'openminds-cost-report.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Cost report exported', 'success');
+}
+
+function exportAuditLog() {
+  const csv = 'time,actor,action,target,detail,ip,tool\n' + auditLog.map(a => `${a.time},"${a.actor}",${a.action},"${a.target}","${a.detail}",${a.ip},${a.tool}`).join('\n');
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'openminds-audit-log.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Audit log exported', 'success');
+}
+
+function exportRunReport() {
+  const lines = [
+    `OpenMinds Run Report — ${new Date().toISOString()}`,
+    `Pipeline: code-review-pipeline`,
+    `Status: Running`,
+    `Total: 12,400 tokens · $0.034`,
+    ``,
+    `Steps:`,
+    ...runSteps.map(s => `  [${s.status.toUpperCase()}] ${s.label} (${s.duration_ms ? (s.duration_ms/1000).toFixed(1)+'s' : '—'}) · ${s.tokens||0} tok · conf:${s.confidence?.toFixed(2) || '—'}`),
+    ``,
+    `Evidence: Immutable. Trajectory ID: ${Date.now().toString(36)}`,
+  ];
+  const blob = new Blob([lines.join('\n')], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'openminds-run-report.txt'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Run report exported', 'success');
+}
+
+function filterAudit() { renderAuditLog(); }
 
 // ═══════════════════════════════════════════════════════════
 // COMMAND PALETTE
@@ -2244,7 +2872,7 @@ function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  const icons = { success: '✓', error: '', warning: '', info: 'ℹ' };
+  const icons = { success: '✓', error: '', warning: '', info: '' };
   toast.innerHTML = `<span aria-hidden="true">${icons[type] || ''}</span> ${message}`;
   container.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(20px)'; toast.style.transition = 'all 0.3s'; setTimeout(() => toast.remove(), 300); }, 2500);
@@ -2255,8 +2883,21 @@ function showToast(message, type = 'info') {
 // ══════════════════════════════════════════════════════════
 document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); paletteOpen ? closePalette() : openPalette(); }
-  if (e.key === 'Escape') { if (paletteOpen) closePalette(); closeNewIssueModal(); closeIngestModal(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === ',') { e.preventDefault(); openSettingsModal(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === '.') { e.preventDefault(); handleKillSwitch(); }
+  if (e.key === 'Escape') { if (paletteOpen) closePalette(); closeNewIssueModal(); closeIngestModal(); closeAgentPanel(); closeSettingsModal(); closeShortcuts(); }
+  if (e.key === '?' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); document.getElementById('shortcutsOverlay').style.display = 'flex'; }
   if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); openNewIssueModal(); }
+  
+  if (e.key === 'g' && !e.metaKey && !e.ctrlKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+    lastKey = 'g';
+    return;
+  }
+  if (lastKey === 'g') {
+    const map = { d: 'dashboard', b: 'board', r: 'runs', f: 'fleet', k: 'knowledge', v: 'voice', m: 'mobile', w: 'workflows', '$': 'cost', a: 'audit' };
+    if (map[e.key]) { switchView(map[e.key]); }
+    lastKey = '';
+  }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -2266,19 +2907,36 @@ setInterval(() => {
   runners.forEach(r => { r.cpu = Math.max(5, Math.min(95, r.cpu + (Math.random() * 10 - 5))); r.memory = Math.max(10, Math.min(95, r.memory + (Math.random() * 6 - 3))); });
   if (document.getElementById('view-fleet').classList.contains('active')) renderFleet();
 }, 5000);
-setInterval(() => { telemetry.trajectories_recorded += Math.floor(Math.random() * 3); renderTelemetry(); }, 8000);
+
+setInterval(() => {
+  telemetry.trajectories_recorded += Math.floor(Math.random() * 3);
+  telemetry.daily_cost += Math.random() * 0.02;
+  renderTelemetry();
+}, 8000);
+
 setInterval(() => {
   const msgs = [
     { msg: 'Agent Codex completed analysis on HIM-4', sev: 'success' },
-    { msg: 'Runner cpu spike detected on runner-us-east-2b', sev: 'warning' },
-    { msg: 'Pipeline test-generation completed successfully', sev: 'success' },
+    { msg: 'Runner CPU spike detected on runner-us-east-2b (82%)', sev: 'warning' },
+    { msg: 'Pipeline test-generation completed successfully (23 tests)', sev: 'success' },
     { msg: 'New trajectory recorded: code-review-pipeline', sev: 'info' },
-    { msg: 'OpenHuman sidecar: memory recall completed', sev: 'info' },
-    { msg: 'Andee device Pixel 8 Pro: screen read OK', sev: 'info' },
+    { msg: 'OpenHuman sidecar: memory recall completed (3 chunks)', sev: 'info' },
+    { msg: 'Andee device Pixel 8 Pro: screen read OK (12 elements)', sev: 'info' },
+    { msg: 'Workflow "Daily Code Review" triggered by cron', sev: 'info' },
+    { msg: 'Knowledge base: 1 new document ingested', sev: 'success' },
+    { msg: 'Voice session vs-a3f2 ended (45s, 2 exchanges)', sev: 'info' },
+    { msg: 'Circuit breaker: half-open probe succeeded → closed', sev: 'success' },
+    { msg: 'Budget warning: daily cost approaching $15 cap', sev: 'warning' },
   ];
   const m = msgs[Math.floor(Math.random() * msgs.length)];
   addEvent(m.msg, m.sev);
 }, 12000);
+
+setInterval(() => {
+  if (voiceSession.active && Math.random() > 0.7) {
+    simulateVoiceInput(['Status update?', 'What\'s running?', 'Show cost so far'][Math.floor(Math.random()*3)]);
+  }
+}, 15000);
 
 // ══════════════════════════════════════════════════════════
 // INIT
@@ -2294,6 +2952,8 @@ renderStepLedger();
 renderKnowledge();
 renderMobileDevices();
 renderWorkflows();
+renderCost();
+renderAuditLog();
 </script>
 </body>
 </html>
