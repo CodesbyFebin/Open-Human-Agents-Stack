@@ -39,7 +39,7 @@ async def test_operator_console_navigation_and_empty_state():
         palette = page.get_by_role("dialog", name="Command palette")
         await palette.wait_for()
         await palette.get_by_role("textbox", name="Find a module").fill("board")
-        await palette.get_by_role("button", name="Team board").click()
+        await palette.get_by_role("button", name="Work board").click()
         await page.get_by_role("heading", name="Team command board").wait_for()
         assert errors == []
         await browser.close()
