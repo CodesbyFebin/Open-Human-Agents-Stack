@@ -1,0 +1,52 @@
+services:
+  om-control-plane:
+    build:
+      context: ..
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - openminds
+
+  om-console:
+    build:
+      context: ..
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - om-control-plane
+    networks:
+      - openminds
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: openminds
+      POSTGRES_PASSWORD: openminds
+      POSTGRES_DB: openminds
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - openminds
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - openminds
+
+volumes:
+  pgdata:
+
+networks:
+  openminds:
+    driver: bridge
